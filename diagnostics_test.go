@@ -3,60 +3,29 @@ package mcrpc
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
-// TestConnectionDiagnostics checks if all required files and connections work
+// TestConnectionDiagnostics checks if all required configuration and connections work
 func TestConnectionDiagnostics(t *testing.T) {
-	t.Run("CheckSecretFile", func(t *testing.T) {
-		secretPath := filepath.Join(".secrets", "secret.txt")
-		info, err := os.Stat(secretPath)
-		if err != nil {
-			t.Fatalf("Secret file not found at %s: %v", secretPath, err)
-		}
-		t.Logf("✓ Secret file exists: %s (size: %d bytes)", secretPath, info.Size())
+	t.Run("CheckConfiguration", func(t *testing.T) {
+		host, port, secret, useTLS := getTestConfig()
 
-		data, err := os.ReadFile(secretPath)
-		if err != nil {
-			t.Fatalf("Cannot read secret file: %v", err)
-		}
-		secret := string(data)
-		if len(secret) == 0 {
-			t.Fatal("Secret file is empty")
-		}
-		t.Logf("✓ Secret loaded successfully (length: %d)", len(secret))
-	})
+		t.Logf("✓ Configuration loaded:")
+		t.Logf("  - Host: %s", host)
+		t.Logf("  - Port: %d", port)
+		t.Logf("  - Secret: %s (length: %d)", maskSecret(secret), len(secret))
+		t.Logf("  - Use TLS: %v", useTLS)
 
-	t.Run("CheckCertFiles", func(t *testing.T) {
-		certPath := filepath.Join(".certs", "cert.crt")
-		keyPath := filepath.Join(".certs", "cert.pem")
-
-		certInfo, err := os.Stat(certPath)
-		if err != nil {
-			t.Fatalf("Certificate file not found at %s: %v", certPath, err)
+		if secret == "" {
+			t.Fatal("Secret is empty - set TEST_SECRET environment variable")
 		}
-		t.Logf("✓ Certificate file exists: %s (size: %d bytes)", certPath, certInfo.Size())
-
-		keyInfo, err := os.Stat(keyPath)
-		if err != nil {
-			t.Fatalf("Key file not found at %s: %v", keyPath, err)
-		}
-		t.Logf("✓ Key file exists: %s (size: %d bytes)", keyPath, keyInfo.Size())
 	})
 
 	t.Run("CheckServerConnection", func(t *testing.T) {
-		_, err := getTestSecret()
-		if err != nil {
-			t.Skipf("Cannot read secret: %v", err)
-		}
+		host, port, _, _ := getTestConfig()
 
-		_, err = getTestCert()
-		if err != nil {
-			t.Skipf("Cannot load certificate: %v", err)
-		}
-
-		fmt.Printf("\nAttempting to connect to %s:%d...\n", testHost, testPort)
+		fmt.Printf("\nAttempting to connect to %s:%d...\n", host, port)
 
 		client, ctx := createTestClient(t)
 
@@ -76,4 +45,77 @@ func TestConnectionDiagnostics(t *testing.T) {
 			t.Logf("  - Players online: %d", len(status.Players))
 		}
 	})
+}
+
+// maskSecret returns a masked version of the secret for logging
+func maskSecret(secret string) string {
+	if len(secret) <= 8 {
+		return "****"
+	}
+	return secret[:4] + "****" + secret[len(secret)-4:]
+}
+
+// TestEnvironmentVariables tests that environment variables are properly read
+func TestEnvironmentVariables(t *testing.T) {
+	// Save original values
+	origHost := os.Getenv("TEST_HOST")
+	origPort := os.Getenv("TEST_PORT")
+	origSecret := os.Getenv("TEST_SECRET")
+	origTLS := os.Getenv("USE_TLS")
+
+	// Restore after test
+	defer func() {
+		os.Setenv("TEST_HOST", origHost)
+		os.Setenv("TEST_PORT", origPort)
+		os.Setenv("TEST_SECRET", origSecret)
+		os.Setenv("USE_TLS", origTLS)
+	}()
+
+	// Test with custom values
+	os.Setenv("TEST_HOST", "test.example.com")
+	os.Setenv("TEST_PORT", "99999")
+	os.Setenv("TEST_SECRET", "my-test-secret")
+	os.Setenv("USE_TLS", "true")
+
+	host, port, secret, useTLS := getTestConfig()
+
+	if host != "test.example.com" {
+		t.Errorf("Expected host 'test.example.com', got '%s'", host)
+	}
+
+	if port != 99999 {
+		t.Errorf("Expected port 99999, got %d", port)
+	}
+
+	if secret != "my-test-secret" {
+		t.Errorf("Expected secret 'my-test-secret', got '%s'", secret)
+	}
+
+	if !useTLS {
+		t.Error("Expected useTLS to be true")
+	}
+
+	// Test defaults when env vars are empty
+	os.Unsetenv("TEST_HOST")
+	os.Unsetenv("TEST_PORT")
+	os.Unsetenv("TEST_SECRET")
+	os.Unsetenv("USE_TLS")
+
+	host, port, secret, useTLS = getTestConfig()
+
+	if host != "127.0.0.1" {
+		t.Errorf("Expected default host '127.0.0.1', got '%s'", host)
+	}
+
+	if port != 12345 {
+		t.Errorf("Expected default port 12345, got %d", port)
+	}
+
+	if secret != "test-secret-for-ci-only" {
+		t.Errorf("Expected default secret, got '%s'", secret)
+	}
+
+	if useTLS {
+		t.Error("Expected useTLS to be false by default")
+	}
 }

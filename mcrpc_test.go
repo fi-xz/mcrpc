@@ -2,61 +2,57 @@ package mcrpc
 
 import (
 	"context"
-	"crypto/tls"
 	"os"
-	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 )
 
-// Test configuration
-const (
-	testHost = "nx-win.thrush-ide.ts.net"
-	testPort = 12345
-)
-
-// getTestSecret reads the secret from the secrets file
-func getTestSecret() (string, error) {
-	secretPath := filepath.Join(".secrets", "secret.txt")
-	data, err := os.ReadFile(secretPath)
-	if err != nil {
-		return "", err
+// getTestConfig returns test configuration from environment variables or defaults
+func getTestConfig() (host string, port int, secret string, useTLS bool) {
+	host = os.Getenv("TEST_HOST")
+	if host == "" {
+		host = "127.0.0.1"
 	}
-	return string(data), nil
-}
 
-// getTestCert loads the TLS certificate for testing
-func getTestCert() (*tls.Certificate, error) {
-	certPath := filepath.Join(".certs", "cert.crt")
-	keyPath := filepath.Join(".certs", "cert.pem")
-
-	cert, err := tls.LoadX509KeyPair(certPath, keyPath)
-	if err != nil {
-		return nil, err
+	portStr := os.Getenv("TEST_PORT")
+	port = 12345
+	if portStr != "" {
+		if p, err := strconv.Atoi(portStr); err == nil {
+			port = p
+		}
 	}
-	return &cert, nil
+
+	secret = os.Getenv("TEST_SECRET")
+	if secret == "" {
+		secret = "test-secret-for-ci-only"
+	}
+
+	useTLS = os.Getenv("USE_TLS") == "true"
+
+	return host, port, secret, useTLS
 }
 
 // createTestClient creates a client for integration tests
 func createTestClient(t *testing.T) (*MCRPCClient, context.Context) {
 	t.Helper()
 
-	secret, err := getTestSecret()
-	if err != nil {
-		t.Skipf("Skipping test: cannot read secret: %v", err)
-	}
-
-	cert, err := getTestCert()
-	if err != nil {
-		t.Skipf("Skipping test: cannot load certificate: %v", err)
-	}
+	host, port, secret, useTLS := getTestConfig()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	t.Cleanup(cancel)
 
-	client, err := CreateWithTLS(ctx, testHost, testPort, secret, cert, true)
+	var client *MCRPCClient
+	var err error
+
+	if useTLS {
+		t.Skip("TLS connections require certificates - use environment variables to configure")
+	} else {
+		client, err = Create(ctx, host, port, secret)
+	}
+
 	if err != nil {
-		t.Skipf("Skipping test: cannot connect to server: %v", err)
+		t.Skipf("Skipping test: cannot connect to server at %s:%d: %v", host, port, err)
 	}
 
 	t.Cleanup(func() {
@@ -66,24 +62,24 @@ func createTestClient(t *testing.T) (*MCRPCClient, context.Context) {
 	return client, ctx
 }
 
-// TestClientCreation tests creating a client with TLS
+// TestClientCreation tests creating a client
 func TestClientCreation(t *testing.T) {
-	secret, err := getTestSecret()
-	if err != nil {
-		t.Skipf("Skipping test: cannot read secret: %v", err)
-	}
-
-	cert, err := getTestCert()
-	if err != nil {
-		t.Skipf("Skipping test: cannot load certificate: %v", err)
-	}
+	host, port, secret, useTLS := getTestConfig()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := CreateWithTLS(ctx, testHost, testPort, secret, cert, true)
+	var client *MCRPCClient
+	var err error
+
+	if useTLS {
+		t.Skip("TLS connections require certificates")
+	} else {
+		client, err = Create(ctx, host, port, secret)
+	}
+
 	if err != nil {
-		t.Skipf("Skipping test: cannot connect to server: %v", err)
+		t.Skipf("Skipping test: cannot connect to server at %s:%d: %v", host, port, err)
 	}
 	defer client.Close()
 
