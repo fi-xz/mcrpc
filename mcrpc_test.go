@@ -56,7 +56,7 @@ func createTestClient(t *testing.T) (*MCRPCClient, context.Context) {
 	}
 
 	t.Cleanup(func() {
-		client.Close()
+		_ = client.Close()
 	})
 
 	return client, ctx
@@ -81,7 +81,7 @@ func TestClientCreation(t *testing.T) {
 	if err != nil {
 		t.Skipf("Skipping test: cannot connect to server at %s:%d: %v", host, port, err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	if client == nil {
 		t.Fatal("Expected non-nil client")

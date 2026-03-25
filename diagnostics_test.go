@@ -65,17 +65,17 @@ func TestEnvironmentVariables(t *testing.T) {
 
 	// Restore after test
 	defer func() {
-		os.Setenv("TEST_HOST", origHost)
-		os.Setenv("TEST_PORT", origPort)
-		os.Setenv("TEST_SECRET", origSecret)
-		os.Setenv("USE_TLS", origTLS)
+		_ = os.Setenv("TEST_HOST", origHost)
+		_ = os.Setenv("TEST_PORT", origPort)
+		_ = os.Setenv("TEST_SECRET", origSecret)
+		_ = os.Setenv("USE_TLS", origTLS)
 	}()
 
 	// Test with custom values
-	os.Setenv("TEST_HOST", "test.example.com")
-	os.Setenv("TEST_PORT", "99999")
-	os.Setenv("TEST_SECRET", "my-test-secret")
-	os.Setenv("USE_TLS", "true")
+	_ = os.Setenv("TEST_HOST", "test.example.com")
+	_ = os.Setenv("TEST_PORT", "99999")
+	_ = os.Setenv("TEST_SECRET", "my-test-secret")
+	_ = os.Setenv("USE_TLS", "true")
 
 	host, port, secret, useTLS := getTestConfig()
 
@@ -96,10 +96,10 @@ func TestEnvironmentVariables(t *testing.T) {
 	}
 
 	// Test defaults when env vars are empty
-	os.Unsetenv("TEST_HOST")
-	os.Unsetenv("TEST_PORT")
-	os.Unsetenv("TEST_SECRET")
-	os.Unsetenv("USE_TLS")
+	_ = os.Unsetenv("TEST_HOST")
+	_ = os.Unsetenv("TEST_PORT")
+	_ = os.Unsetenv("TEST_SECRET")
+	_ = os.Unsetenv("USE_TLS")
 
 	host, port, secret, useTLS = getTestConfig()
 
