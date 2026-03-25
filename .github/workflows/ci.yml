@@ -43,27 +43,36 @@ jobs:
       - name: Build
         run: go build -v ./...
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "zulu"
+
       - name: Setup PaperMC Server
         run: |
           mkdir -p server
           cd server
-          
+
+          # Verify Java version
+          java -version
+
           # Fetch latest build info and extract download URL using jq
           echo "Fetching latest PaperMC build info..."
           PAPER_URL=$(curl -s -A "mcrpc-github-ci/1.0.0 (https://github.com/fi-xz/mcrpc)" \
             "https://fill.papermc.io/v3/projects/paper/versions/${{ env.PAPERMC_VERSION }}/builds/latest" | \
             jq -r '.downloads."server:default".url')
-          
+
           if [ -z "$PAPER_URL" ] || [ "$PAPER_URL" = "null" ]; then
             echo "Failed to fetch PaperMC download URL"
             exit 1
           fi
-          
+
           echo "Downloading PaperMC from: $PAPER_URL"
           curl -o paper.jar "$PAPER_URL"
-          
+
           echo "eula=true" > eula.txt
-          
+
           # Create server.properties with WebSocket enabled
           cat > server.properties << 'EOF'
           management-server-allowed-origins=
@@ -75,11 +84,11 @@ jobs:
           management-server-tls-keystore=
           management-server-tls-keystore-password=
           EOF
-          
+
           # Start server in background
           nohup java -Xms512M -Xmx1G -jar paper.jar nogui > server.log 2>&1 &
           echo $! > server.pid
-          
+
           # Wait for server to start (check log)
           for i in {1..60}; do
             if grep -q "Done" server.log 2>/dev/null; then
@@ -93,7 +102,7 @@ jobs:
             fi
             sleep 1
           done
-          
+
           cd ..
 
       - name: Test with live server
@@ -131,7 +140,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.64.0
+          version: v2.11.4
           args: --timeout=5m
 
   test-race:
@@ -144,27 +153,36 @@ jobs:
         with:
           go-version: "1.26"
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "zulu"
+
       - name: Setup PaperMC Server
         run: |
           mkdir -p server
           cd server
-          
+
+          # Verify Java version
+          java -version
+
           # Fetch latest build info and extract download URL using jq
           echo "Fetching latest PaperMC build info..."
           PAPER_URL=$(curl -s -A "mcrpc-github-ci/1.0.0 (https://github.com/fi-xz/mcrpc)" \
             "https://fill.papermc.io/v3/projects/paper/versions/${{ env.PAPERMC_VERSION }}/builds/latest" | \
             jq -r '.downloads."server:default".url')
-          
+
           if [ -z "$PAPER_URL" ] || [ "$PAPER_URL" = "null" ]; then
             echo "Failed to fetch PaperMC download URL"
             exit 1
           fi
-          
+
           echo "Downloading PaperMC from: $PAPER_URL"
           curl -o paper.jar "$PAPER_URL"
-          
+
           echo "eula=true" > eula.txt
-          
+
           cat > server.properties << 'EOF'
           management-server-allowed-origins=
           management-server-enabled=true
@@ -175,10 +193,10 @@ jobs:
           management-server-tls-keystore=
           management-server-tls-keystore-password=
           EOF
-          
+
           nohup java -Xms512M -Xmx1G -jar paper.jar nogui > server.log 2>&1 &
           echo $! > server.pid
-          
+
           for i in {1..60}; do
             if grep -q "Done" server.log 2>/dev/null; then
               echo "Server started successfully"
@@ -191,7 +209,7 @@ jobs:
             fi
             sleep 1
           done
-          
+
           cd ..
 
       - name: Test with race detector
