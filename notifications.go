@@ -9,10 +9,16 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
+type handlerFunc func(context.Context, *jsonrpc2.Conn, *jsonrpc2.Request)
+
+func (f handlerFunc) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	f(ctx, conn, req)
+}
+
 // handleIncoming creates a JSON-RPC handler that processes incoming notifications from the server.
 // It dispatches notifications to the appropriate handler callbacks set on the MCRPCClient.
 func (c *MCRPCClient) handleIncoming() jsonrpc2.Handler {
-	return jsonrpc2.HandlerWithError(func(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+	return handlerFunc(func(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) {
 		if req.Notif {
 			var params json.RawMessage
 			if req.Params != nil {
@@ -182,7 +188,5 @@ func (c *MCRPCClient) handleIncoming() jsonrpc2.Handler {
 				}
 			}
 		}
-
-		return nil, nil
 	})
 }
