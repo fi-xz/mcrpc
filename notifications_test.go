@@ -1,12 +1,302 @@
 package mcrpc
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/fi-xz/mcrpc/internal/protocol"
+	"github.com/fi-xz/mcrpc/internal/types"
+	"github.com/sourcegraph/jsonrpc2"
 )
+
+// makeNotif builds a jsonrpc2 notification request with optional JSON params.
+func makeNotif(method string, params any) *jsonrpc2.Request {
+	req := &jsonrpc2.Request{Method: method, Notif: true}
+	if params != nil {
+		raw, _ := json.Marshal(params)
+		rawMsg := json.RawMessage(raw)
+		req.Params = &rawMsg
+	}
+	return req
+}
+
+// TestHandleIncomingDispatch tests that handleIncoming routes each notification
+// method to the correct handler without requiring a real server connection.
+func TestHandleIncomingDispatch(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("NilHandlerNoParam_NoPanic", func(t *testing.T) {
+		client := &MCRPCClient{}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStarted, nil))
+	})
+
+	t.Run("NonNotificationIgnored", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnServerStarted = func() { called = true }
+		req := &jsonrpc2.Request{Method: protocol.NotificationServerStarted, Notif: false}
+		client.handleIncoming().Handle(ctx, nil, req)
+		if called {
+			t.Error("handler called for non-notification request")
+		}
+	})
+
+	t.Run("UnknownMethodNoPanic", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnNotification = func(_ string, _ json.RawMessage) { called = true }
+		client.handleIncoming().Handle(ctx, nil, makeNotif("minecraft:unknown/method", nil))
+		if !called {
+			t.Error("OnNotification not called for unknown method")
+		}
+	})
+
+	t.Run("GenericCalledBeforeSpecific", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var order []string
+		client.OnNotification = func(_ string, _ json.RawMessage) { order = append(order, "generic") }
+		client.OnServerStarted = func() { order = append(order, "specific") }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStarted, nil))
+		if len(order) != 2 || order[0] != "generic" || order[1] != "specific" {
+			t.Errorf("unexpected call order: %v", order)
+		}
+	})
+
+	t.Run("InvalidParamsDoesNotCallTypedHandler", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnPlayerJoined = func(_ Player) { called = true }
+		rawMsg := json.RawMessage(`{invalid}`)
+		req := &jsonrpc2.Request{Method: protocol.NotificationPlayerJoined, Params: &rawMsg, Notif: true}
+		client.handleIncoming().Handle(ctx, nil, req)
+		if called {
+			t.Error("typed handler called despite invalid JSON params")
+		}
+	})
+
+	t.Run("ServerStarted", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnServerStarted = func() { called = true }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStarted, nil))
+		if !called {
+			t.Error("OnServerStarted not dispatched")
+		}
+	})
+
+	t.Run("ServerStopping", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnServerStopping = func() { called = true }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStopping, nil))
+		if !called {
+			t.Error("OnServerStopping not dispatched")
+		}
+	})
+
+	t.Run("ServerSaving", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnServerSaving = func() { called = true }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerSaving, nil))
+		if !called {
+			t.Error("OnServerSaving not dispatched")
+		}
+	})
+
+	t.Run("ServerSaved", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnServerSaved = func() { called = true }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerSaved, nil))
+		if !called {
+			t.Error("OnServerSaved not dispatched")
+		}
+	})
+
+	t.Run("ServerStatus", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got ServerState
+		client.OnServerStatus = func(s ServerState) { got = s }
+		state := ServerState{Started: true, Version: types.Version{Name: "1.21.4", Protocol: 769}}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStatus, state))
+		if !got.Started || got.Version.Name != "1.21.4" {
+			t.Errorf("OnServerStatus got unexpected value: %+v", got)
+		}
+	})
+
+	t.Run("ServerActivity", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnServerActivity = func() { called = true }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerActivity, nil))
+		if !called {
+			t.Error("OnServerActivity not dispatched")
+		}
+	})
+
+	t.Run("PlayerJoined", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got Player
+		client.OnPlayerJoined = func(p Player) { got = p }
+		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationPlayerJoined, player))
+		if got.Name != player.Name || got.UUID != player.UUID {
+			t.Errorf("OnPlayerJoined got %+v, want %+v", got, player)
+		}
+	})
+
+	t.Run("PlayerLeft", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got Player
+		client.OnPlayerLeft = func(p Player) { got = p }
+		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationPlayerLeft, player))
+		if got.Name != player.Name {
+			t.Errorf("OnPlayerLeft got %+v, want %+v", got, player)
+		}
+	})
+
+	t.Run("OperatorAdded", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got Operator
+		client.OnOperatorAdded = func(op Operator) { got = op }
+		op := Operator{Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}, PermissionLevel: 4}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationOperatorAdded, op))
+		if got.Player.Name != op.Player.Name || got.PermissionLevel != op.PermissionLevel {
+			t.Errorf("OnOperatorAdded got %+v, want %+v", got, op)
+		}
+	})
+
+	t.Run("OperatorRemoved", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got Operator
+		client.OnOperatorRemoved = func(op Operator) { got = op }
+		op := Operator{Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}, PermissionLevel: 4}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationOperatorRemoved, op))
+		if got.Player.Name != op.Player.Name {
+			t.Errorf("OnOperatorRemoved got %+v, want %+v", got, op)
+		}
+	})
+
+	t.Run("AllowlistAdded", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got Player
+		client.OnAllowlistAdded = func(p Player) { got = p }
+		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationAllowlistAdded, player))
+		if got.Name != player.Name {
+			t.Errorf("OnAllowlistAdded got %+v, want %+v", got, player)
+		}
+	})
+
+	t.Run("AllowlistRemoved", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got Player
+		client.OnAllowlistRemoved = func(p Player) { got = p }
+		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationAllowlistRemoved, player))
+		if got.Name != player.Name {
+			t.Errorf("OnAllowlistRemoved got %+v, want %+v", got, player)
+		}
+	})
+
+	t.Run("BanAdded", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got UserBan
+		client.OnBanAdded = func(b UserBan) { got = b }
+		ban := UserBan{Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}, Reason: "test", Source: "Test"}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationBanAdded, ban))
+		if got.Player.Name != ban.Player.Name || got.Reason != ban.Reason {
+			t.Errorf("OnBanAdded got %+v, want %+v", got, ban)
+		}
+	})
+
+	t.Run("BanRemoved", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got Player
+		client.OnBanRemoved = func(p Player) { got = p }
+		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationBanRemoved, player))
+		if got.Name != player.Name {
+			t.Errorf("OnBanRemoved got %+v, want %+v", got, player)
+		}
+	})
+
+	t.Run("IPBanAdded", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got IPBan
+		client.OnIPBanAdded = func(b IPBan) { got = b }
+		ban := IPBan{IP: "192.168.1.100", Reason: "test", Source: "Test"}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationIPBanAdded, ban))
+		if got.IP != ban.IP || got.Reason != ban.Reason {
+			t.Errorf("OnIPBanAdded got %+v, want %+v", got, ban)
+		}
+	})
+
+	t.Run("IPBanRemoved", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got string
+		client.OnIPBanRemoved = func(ip string) { got = ip }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationIPBanRemoved, "192.168.1.100"))
+		if got != "192.168.1.100" {
+			t.Errorf("OnIPBanRemoved got %q, want %q", got, "192.168.1.100")
+		}
+	})
+
+	t.Run("GameruleUpdated", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got TypedGameRule
+		client.OnGameruleUpdated = func(g TypedGameRule) { got = g }
+		rule := TypedGameRule{UntypedGameRule: types.UntypedGameRule{Key: "keepInventory", Value: true}, Type: "boolean"}
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationGameruleUpdated, rule))
+		if got.Key != rule.Key || got.Type != rule.Type {
+			t.Errorf("OnGameruleUpdated got %+v, want %+v", got, rule)
+		}
+	})
+
+	t.Run("WorldUpgradeStarted", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnWorldUpgradeStarted = func() { called = true }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeStarted, nil))
+		if !called {
+			t.Error("OnWorldUpgradeStarted not dispatched")
+		}
+	})
+
+	t.Run("WorldUpgradeProgress", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got float64
+		client.OnWorldUpgradeProgress = func(p float64) { got = p }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeProgress, 0.42))
+		if got != 0.42 {
+			t.Errorf("OnWorldUpgradeProgress got %v, want 0.42", got)
+		}
+	})
+
+	t.Run("WorldUpgradeFinished", func(t *testing.T) {
+		client := &MCRPCClient{}
+		called := false
+		client.OnWorldUpgradeFinished = func() { called = true }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeFinished, nil))
+		if !called {
+			t.Error("OnWorldUpgradeFinished not dispatched")
+		}
+	})
+
+	t.Run("WorldUpgradeFailed", func(t *testing.T) {
+		client := &MCRPCClient{}
+		var got string
+		client.OnWorldUpgradeFailed = func(r string) { got = r }
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeFailed, "disk full"))
+		if got != "disk full" {
+			t.Errorf("OnWorldUpgradeFailed got %q, want %q", got, "disk full")
+		}
+	})
+}
 
 // TestNotificationHandlersExist tests that notification handler fields exist and can be set
 func TestNotificationHandlersExist(t *testing.T) {
@@ -100,6 +390,57 @@ func TestNotificationHandlerInvocation(t *testing.T) {
 			}
 		case <-time.After(time.Second):
 			t.Error("OnNotification handler was not invoked")
+		}
+	})
+
+	// World upgrade handlers
+	t.Run("WorldUpgradeStarted", func(t *testing.T) {
+		called := make(chan bool, 1)
+		client.OnWorldUpgradeStarted = func() { called <- true }
+		client.OnWorldUpgradeStarted()
+		select {
+		case <-called:
+		case <-time.After(time.Second):
+			t.Error("OnWorldUpgradeStarted handler was not invoked")
+		}
+	})
+
+	t.Run("WorldUpgradeProgress", func(t *testing.T) {
+		received := make(chan float64, 1)
+		client.OnWorldUpgradeProgress = func(p float64) { received <- p }
+		client.OnWorldUpgradeProgress(0.75)
+		select {
+		case p := <-received:
+			if p != 0.75 {
+				t.Errorf("Expected progress 0.75, got %v", p)
+			}
+		case <-time.After(time.Second):
+			t.Error("OnWorldUpgradeProgress handler was not invoked")
+		}
+	})
+
+	t.Run("WorldUpgradeFinished", func(t *testing.T) {
+		called := make(chan bool, 1)
+		client.OnWorldUpgradeFinished = func() { called <- true }
+		client.OnWorldUpgradeFinished()
+		select {
+		case <-called:
+		case <-time.After(time.Second):
+			t.Error("OnWorldUpgradeFinished handler was not invoked")
+		}
+	})
+
+	t.Run("WorldUpgradeFailed", func(t *testing.T) {
+		received := make(chan string, 1)
+		client.OnWorldUpgradeFailed = func(r string) { received <- r }
+		client.OnWorldUpgradeFailed("disk full")
+		select {
+		case r := <-received:
+			if r != "disk full" {
+				t.Errorf("Expected reason %q, got %q", "disk full", r)
+			}
+		case <-time.After(time.Second):
+			t.Error("OnWorldUpgradeFailed handler was not invoked")
 		}
 	})
 }
