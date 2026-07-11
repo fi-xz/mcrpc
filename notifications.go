@@ -153,6 +153,33 @@ func (c *MCRPCClient) handleIncoming() jsonrpc2.Handler {
 						c.OnGameruleUpdated(gamerule)
 					}
 				}
+
+			// World Notifications
+			case protocol.NotificationWorldUpgradeStarted:
+				if c.OnWorldUpgradeStarted != nil {
+					c.OnWorldUpgradeStarted()
+				}
+
+			case protocol.NotificationWorldUpgradeProgress:
+				if c.OnWorldUpgradeProgress != nil {
+					var progress float64
+					if err := json.Unmarshal(params, &progress); err == nil {
+						c.OnWorldUpgradeProgress(progress)
+					}
+				}
+
+			case protocol.NotificationWorldUpgradeFinished:
+				if c.OnWorldUpgradeFinished != nil {
+					c.OnWorldUpgradeFinished()
+				}
+
+			case protocol.NotificationWorldUpgradeFailed:
+				if c.OnWorldUpgradeFailed != nil {
+					var reason string
+					if err := json.Unmarshal(params, &reason); err == nil {
+						c.OnWorldUpgradeFailed(reason)
+					}
+				}
 			}
 		}
 

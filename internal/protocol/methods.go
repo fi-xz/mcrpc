@@ -219,4 +219,15 @@ const (
 
 	// Notification sent when a gamerule is updated
 	NotificationGameruleUpdated = "minecraft:notification/gamerules/updated"
+
+	// World Notifications
+
+	// Notification sent when a world upgrade started
+	NotificationWorldUpgradeStarted = "minecraft:notification/world/upgrade_started"
+	// Notification sent when a world upgrade is in progress. Rate limited to 1 notification per second.
+	NotificationWorldUpgradeProgress = "minecraft:notification/world/upgrade_progress"
+	// Notification sent when a world upgrade is finished
+	NotificationWorldUpgradeFinished = "minecraft:notification/world/upgrade_finished"
+	// Notification sent when a world upgrade failed
+	NotificationWorldUpgradeFailed = "minecraft:notification/world/upgrade_failed"
 )

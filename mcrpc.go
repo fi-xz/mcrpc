@@ -60,6 +60,12 @@ type MCRPCClient struct {
 
 	// Gamerule notification handlers
 	OnGameruleUpdated func(gamerule TypedGameRule)
+
+	// World notification handlers
+	OnWorldUpgradeStarted  func()
+	OnWorldUpgradeProgress func(progress float64)
+	OnWorldUpgradeFinished func()
+	OnWorldUpgradeFailed   func(reason string)
 }
 
 // Create establishes a WebSocket connection to the Minecraft server without TLS.
