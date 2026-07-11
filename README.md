@@ -8,11 +8,11 @@ A Go client library for the [Minecraft Server Management Protocol](https://minec
 
 > [!Warning]
 >
-> Part of this project is handled by the AI Agent. (Using OpenCode)
+> Part of this project is handled by the AI.
 >
-> Most code structure is mostly handled by myself. Only repetitive tasks, tests, and long codes are written by the AI.
+> Most code structure is mostly handled by myself. Only repetitive tasks, tests, and long length codes are written by the AI.
 >
-> While I try my best to make non fully vibe-coded library, there may some errors occur.
+> While I try my best not to make vibe-coded library, there may some errors occur.
 
 ## Features
 
@@ -127,6 +127,7 @@ Available handlers:
 - Bans: `OnBanAdded`, `OnBanRemoved`
 - IP Bans: `OnIPBanAdded`, `OnIPBanRemoved`
 - Game Rules: `OnGameruleUpdated`
+- World: `OnWorldUpgradeStarted`, `OnWorldUpgradeProgress`, `OnWorldUpgradeFinished`, `OnWorldUpgradeFailed`
 
 ## Configuration
 
