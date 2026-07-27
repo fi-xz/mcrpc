@@ -10,6 +10,7 @@ env:
   PAPERMC_VERSION: "1.21.11"
   TEST_SERVER_PORT: 12345
   TEST_SERVER_SECRET: "test-secret-for-ci-only"
+  TEST_KEYSTORE_PASSWORD: "keystore-password-for-ci-only"
 
 jobs:
   build:
@@ -40,60 +41,11 @@ jobs:
           distribution: "zulu"
 
       - name: Setup PaperMC Server
-        run: |
-          mkdir -p server
-          cd server
-
-          # Verify Java version
-          java -version
-
-          # Fetch latest build info and extract download URL using jq
-          echo "Fetching latest PaperMC build info..."
-          PAPER_URL=$(curl -s -A "mcrpc-github-ci/1.0.0 (https://github.com/fi-xz/mcrpc)" \
-            "https://fill.papermc.io/v3/projects/paper/versions/${{ env.PAPERMC_VERSION }}/builds/latest" | \
-            jq -r '.downloads."server:default".url')
-
-          if [ -z "$PAPER_URL" ] || [ "$PAPER_URL" = "null" ]; then
-            echo "Failed to fetch PaperMC download URL"
-            exit 1
-          fi
-
-          echo "Downloading PaperMC from: $PAPER_URL"
-          curl -o paper.jar "$PAPER_URL"
-
-          echo "eula=true" > eula.txt
-
-          # Create server.properties with WebSocket enabled
-          cat > server.properties << 'EOF'
-          management-server-allowed-origins=
-          management-server-enabled=true
-          management-server-host=localhost
-          management-server-port=${{ env.TEST_SERVER_PORT }}
-          management-server-secret=${{ env.TEST_SERVER_SECRET }}
-          management-server-tls-enabled=false
-          management-server-tls-keystore=
-          management-server-tls-keystore-password=
-          EOF
-
-          # Start server in background
-          nohup java -Xms512M -Xmx1G -jar paper.jar nogui > server.log 2>&1 &
-          echo $! > server.pid
-
-          # Wait for server to start (check log)
-          for i in {1..60}; do
-            if grep -q "Done" server.log 2>/dev/null; then
-              echo "Server started successfully"
-              break
-            fi
-            if [ $i -eq 60 ]; then
-              echo "Server failed to start within 60 seconds"
-              cat server.log
-              exit 1
-            fi
-            sleep 1
-          done
-
-          cd ..
+        env:
+          PAPERMC_VERSION: ${{ env.PAPERMC_VERSION }}
+          TEST_SERVER_PORT: ${{ env.TEST_SERVER_PORT }}
+          TEST_SERVER_SECRET: ${{ env.TEST_SERVER_SECRET }}
+        run: .github/scripts/setup-paper.sh
 
       - name: Test with live server
         env:
@@ -152,57 +104,11 @@ jobs:
           distribution: "zulu"
 
       - name: Setup PaperMC Server
-        run: |
-          mkdir -p server
-          cd server
-
-          # Verify Java version
-          java -version
-
-          # Fetch latest build info and extract download URL using jq
-          echo "Fetching latest PaperMC build info..."
-          PAPER_URL=$(curl -s -A "mcrpc-github-ci/1.0.0 (https://github.com/fi-xz/mcrpc)" \
-            "https://fill.papermc.io/v3/projects/paper/versions/${{ env.PAPERMC_VERSION }}/builds/latest" | \
-            jq -r '.downloads."server:default".url')
-
-          if [ -z "$PAPER_URL" ] || [ "$PAPER_URL" = "null" ]; then
-            echo "Failed to fetch PaperMC download URL"
-            exit 1
-          fi
-
-          echo "Downloading PaperMC from: $PAPER_URL"
-          curl -o paper.jar "$PAPER_URL"
-
-          echo "eula=true" > eula.txt
-
-          cat > server.properties << 'EOF'
-          management-server-allowed-origins=
-          management-server-enabled=true
-          management-server-host=localhost
-          management-server-port=${{ env.TEST_SERVER_PORT }}
-          management-server-secret=${{ env.TEST_SERVER_SECRET }}
-          management-server-tls-enabled=false
-          management-server-tls-keystore=
-          management-server-tls-keystore-password=
-          EOF
-
-          nohup java -Xms512M -Xmx1G -jar paper.jar nogui > server.log 2>&1 &
-          echo $! > server.pid
-
-          for i in {1..60}; do
-            if grep -q "Done" server.log 2>/dev/null; then
-              echo "Server started successfully"
-              break
-            fi
-            if [ $i -eq 60 ]; then
-              echo "Server failed to start"
-              cat server.log
-              exit 1
-            fi
-            sleep 1
-          done
-
-          cd ..
+        env:
+          PAPERMC_VERSION: ${{ env.PAPERMC_VERSION }}
+          TEST_SERVER_PORT: ${{ env.TEST_SERVER_PORT }}
+          TEST_SERVER_SECRET: ${{ env.TEST_SERVER_SECRET }}
+        run: .github/scripts/setup-paper.sh
 
       - name: Test with race detector
         env:
@@ -213,6 +119,52 @@ jobs:
         run: go test -race -count=1 ./...
 
       - name: Cleanup
+        if: always()
+        run: |
+          if [ -f server/server.pid ]; then
+            kill $(cat server/server.pid) 2>/dev/null || true
+          fi
+
+  test-tls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+          cache: true
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "zulu"
+
+      - name: Setup PaperMC Server with TLS
+        env:
+          PAPERMC_VERSION: ${{ env.PAPERMC_VERSION }}
+          TEST_SERVER_PORT: ${{ env.TEST_SERVER_PORT }}
+          TEST_SERVER_SECRET: ${{ env.TEST_SERVER_SECRET }}
+          TLS: "true"
+          KEYSTORE_PASSWORD: ${{ env.TEST_KEYSTORE_PASSWORD }}
+        run: .github/scripts/setup-paper.sh
+
+      # The certificate names localhost, and the client trusts it through
+      # TEST_TLS_CA, so this exercises a real wss handshake with verification
+      # on rather than skipped. No client certificate is presented, which is the
+      # configuration most servers actually run.
+      - name: Test over TLS
+        env:
+          TEST_HOST: "localhost"
+          TEST_PORT: "${{ env.TEST_SERVER_PORT }}"
+          TEST_SECRET: "${{ env.TEST_SERVER_SECRET }}"
+          USE_TLS: "true"
+          TEST_TLS_CA: "server/ca.crt"
+        run: go test -race -count=1 ./...
+
+      - name: Cleanup PaperMC Server
         if: always()
         run: |
           if [ -f server/server.pid ]; then

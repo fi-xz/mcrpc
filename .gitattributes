@@ -1,0 +1,3 @@
+# CI executes this script on Linux, so it must keep LF endings regardless of
+# the checkout platform.
+*.sh text eol=lf
