@@ -50,15 +50,35 @@ func TestTLSOptionsCombine(t *testing.T) {
 }
 
 func TestWithTLSClonesTheConfig(t *testing.T) {
-	supplied := &tls.Config{ServerName: "example.test"}
-	client := New("host:1", "secret", WithTLS(supplied))
+	// The caller keeps their own config, and neither side may reach the other
+	// through it once the option has been applied.
+	t.Run("a later change by the caller does not reach the client", func(t *testing.T) {
+		supplied := &tls.Config{ServerName: "example.test"}
+		client := New("host:1", "secret", WithTLS(supplied))
 
-	config := client.tlsSettings()
-	config.ServerName = "mutated"
+		supplied.ServerName = "mutated"
+		supplied.InsecureSkipVerify = true
 
-	if supplied.ServerName != "example.test" {
-		t.Errorf("the caller's config was mutated: ServerName = %q", supplied.ServerName)
-	}
+		config := client.tlsSettings()
+		if config.ServerName != "example.test" {
+			t.Errorf("ServerName = %q, want the value given to WithTLS", config.ServerName)
+		}
+		if config.InsecureSkipVerify {
+			t.Error("the caller turned verification off after the fact")
+		}
+	})
+
+	t.Run("the assembled config is not the caller's", func(t *testing.T) {
+		supplied := &tls.Config{ServerName: "example.test"}
+		client := New("host:1", "secret", WithTLS(supplied))
+
+		config := client.tlsSettings()
+		config.ServerName = "mutated"
+
+		if supplied.ServerName != "example.test" {
+			t.Errorf("the caller's config was mutated: ServerName = %q", supplied.ServerName)
+		}
+	})
 }
 
 func TestWithTLSNilSelectsDefaults(t *testing.T) {
