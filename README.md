@@ -328,7 +328,8 @@ Available handlers:
 - Game Rules: `OnGameruleUpdated`
 - World (API 3.1.0+, Minecraft 26.3): `OnWorldUpgradeStarted`,
   `OnWorldUpgradeProgress` (0–1, rate limited to one per second),
-  `OnWorldUpgradeFinished`, `OnWorldUpgradeFailed`
+  `OnWorldUpgradeFinished`, `OnWorldUpgradeFailed`. These fire while the server
+  boots, before it finishes coming up, so register them and connect early
 - Catch-all: `OnNotification` (every notification, with raw params), `OnError`
   (a notification whose params could not be decoded)
 

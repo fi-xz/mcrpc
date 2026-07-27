@@ -101,11 +101,23 @@ func TestProbeWorldUpgrade(t *testing.T) {
 	}
 	window := time.Duration(seconds) * time.Second
 
+	// The upgrade can finish before the management server binds, so the gap
+	// between attempts is the probe's resolution. PROBE_RETRY_MS tightens it.
+	retry := 50 * time.Millisecond
+	if raw := os.Getenv("PROBE_RETRY_MS"); raw != "" {
+		if ms, err := strconv.Atoi(raw); err == nil && ms > 0 {
+			retry = time.Duration(ms) * time.Millisecond
+		}
+	}
+
 	host, port, _, _ := getTestConfig()
 
 	log := newWorldUpgradeLog()
 	options := append(testTLSOptions(t), WithHandler(log.handler()))
 	options = append(options, testTraceOption(t)...)
+	// A boot-time handshake that stalls should be abandoned and retried rather
+	// than sitting on the default ten seconds.
+	options = append(options, WithHandshakeTimeout(2*time.Second))
 
 	client := NewHostPort(host, port, testSecret(), options...)
 	t.Cleanup(func() { _ = client.Close() })
@@ -113,7 +125,8 @@ func TestProbeWorldUpgrade(t *testing.T) {
 	ctx, stop := context.WithTimeout(context.Background(), window)
 	defer stop()
 
-	t.Logf("waiting up to %s for %s:%d — start the server now", window, host, port)
+	t.Logf("waiting up to %s for %s:%d, retrying every %s — start the server now",
+		window, host, port, retry)
 
 	// Keep a session up for the whole window. The management server may accept
 	// before the world work begins, and may drop the connection as the server
@@ -136,7 +149,7 @@ func TestProbeWorldUpgrade(t *testing.T) {
 
 			lastDialErr = err
 			select {
-			case <-time.After(250 * time.Millisecond):
+			case <-time.After(retry):
 			case <-ctx.Done():
 			}
 			continue

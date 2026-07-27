@@ -211,9 +211,12 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		// Servers below that do not advertise them through rpc.discover and
 		// never send them.
 		//
-		// upgrade_progress carries a number between 0 and 1 and is rate limited
-		// to one notification per second; upgrade_failed carries a reason
-		// string. The other two take no parameters.
+		// Observed on a 26.3 server converting a world: upgrade_started and
+		// upgrade_finished carry no parameters, and upgrade_progress arrives as
+		// [0.0] — the number wrapped in the positional argument list, same as
+		// every other payload. It is rate limited to one notification per
+		// second. upgrade_failed carries a reason string and has not been seen,
+		// since provoking a failed conversion was not attempted.
 		case protocol.NotificationWorldUpgradeStarted:
 			if c.handler.OnWorldUpgradeStarted != nil {
 				c.handler.OnWorldUpgradeStarted()
