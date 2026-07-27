@@ -2,7 +2,7 @@ package mcrpc
 
 import (
 	"encoding/json"
-	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/sourcegraph/jsonrpc2"
@@ -86,7 +86,7 @@ func (m TraceMessage) String() string {
 
 	switch {
 	case m.IsError():
-		line.WriteString(fmt.Sprintf(" error %d %s", m.ErrorCode, m.ErrorMessage))
+		line.WriteString(" error " + strconv.FormatInt(m.ErrorCode, 10) + " " + m.ErrorMessage)
 	case m.Params != nil:
 		line.WriteString(" " + string(m.Params))
 	case m.Result != nil:

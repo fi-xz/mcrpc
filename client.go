@@ -127,7 +127,9 @@ func (c *Client) Start(ctx context.Context) error {
 		case <-sessionCtx.Done():
 		case <-rpc.DisconnectNotify():
 		}
-		c.closeSession(rpc)
+		// Nothing can act on a teardown failure from here, and the session is
+		// over either way.
+		_ = c.closeSession(rpc)
 	}()
 
 	return nil
