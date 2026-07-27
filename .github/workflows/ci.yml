@@ -45,7 +45,7 @@ jobs:
           PAPERMC_VERSION: ${{ env.PAPERMC_VERSION }}
           TEST_SERVER_PORT: ${{ env.TEST_SERVER_PORT }}
           TEST_SERVER_SECRET: ${{ env.TEST_SERVER_SECRET }}
-        run: .github/scripts/setup-paper.sh
+        run: bash .github/scripts/setup-paper.sh
 
       - name: Test with live server
         env:
@@ -108,7 +108,7 @@ jobs:
           PAPERMC_VERSION: ${{ env.PAPERMC_VERSION }}
           TEST_SERVER_PORT: ${{ env.TEST_SERVER_PORT }}
           TEST_SERVER_SECRET: ${{ env.TEST_SERVER_SECRET }}
-        run: .github/scripts/setup-paper.sh
+        run: bash .github/scripts/setup-paper.sh
 
       - name: Test with race detector
         env:
@@ -149,7 +149,7 @@ jobs:
           TEST_SERVER_SECRET: ${{ env.TEST_SERVER_SECRET }}
           TLS: "true"
           KEYSTORE_PASSWORD: ${{ env.TEST_KEYSTORE_PASSWORD }}
-        run: .github/scripts/setup-paper.sh
+        run: bash .github/scripts/setup-paper.sh
 
       # The certificate names localhost, and the client trusts it through
       # TEST_TLS_CA, so this exercises a real wss handshake with verification

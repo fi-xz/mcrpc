@@ -518,3 +518,37 @@ func TestIsRunningSeesADroppedSessionBeforeItIsReaped(t *testing.T) {
 		t.Error("a dropped connection should not report the client as running")
 	}
 }
+
+// TestStartReapsASessionWithNoCancelFunc covers a Client assembled field by
+// field rather than by Start, where rpc is set but cancel is not. Reaping such
+// a session must not panic.
+func TestStartReapsASessionWithNoCancelFunc(t *testing.T) {
+	local, remote := net.Pipe()
+	if err := remote.Close(); err != nil {
+		t.Fatalf("could not close the far end: %v", err)
+	}
+
+	dead := jsonrpc2.NewConn(
+		context.Background(),
+		jsonrpc2.NewPlainObjectStream(local),
+		handlerFunc(func(context.Context, *jsonrpc2.Conn, *jsonrpc2.Request) {}),
+	)
+	select {
+	case <-dead.DisconnectNotify():
+	case <-time.After(2 * time.Second):
+		t.Fatal("the connection never reported a disconnect")
+	}
+
+	server := newFakeServer(t, okResponder)
+	client := New(server.addr(), "secret")
+	client.rpc = dead
+
+	if err := client.Start(context.Background()); err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+	t.Cleanup(func() { _ = client.Close() })
+
+	if !client.IsRunning() {
+		t.Error("the client should be running on the new session")
+	}
+}
