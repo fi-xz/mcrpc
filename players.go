@@ -5,11 +5,7 @@ import (
 	"context"
 
 	"github.com/fi-xz/mcrpc/internal/protocol"
-	"github.com/fi-xz/mcrpc/internal/types"
 )
-
-// KickPlayer is an alias for types.KickPlayer, representing a player to be kicked with a message.
-type KickPlayer = types.KickPlayer
 
 // GetPlayers retrieves the list of currently online players.
 func (c *MCRPCClient) GetPlayers(context context.Context) ([]Player, error) {

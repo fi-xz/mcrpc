@@ -5,11 +5,7 @@ import (
 	"context"
 
 	"github.com/fi-xz/mcrpc/internal/protocol"
-	"github.com/fi-xz/mcrpc/internal/types"
 )
-
-// Operator is an alias for types.Operator, representing a server operator.
-type Operator = types.Operator
 
 // GetOperators retrieves the current list of operators.
 func (c *MCRPCClient) GetOperators(context context.Context) ([]Operator, error) {

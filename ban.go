@@ -5,17 +5,7 @@ import (
 	"context"
 
 	"github.com/fi-xz/mcrpc/internal/protocol"
-	"github.com/fi-xz/mcrpc/internal/types"
 )
-
-// UserBan is an alias for types.UserBan, representing a banned player.
-type UserBan = types.UserBan
-
-// IPBan is an alias for types.IPBan, representing a banned IP address.
-type IPBan = types.IPBan
-
-// IncomingIPBan is an alias for types.IncomingIPBan, representing an incoming IP ban with player information.
-type IncomingIPBan = types.IncomingIPBan
 
 // GetBanlist retrieves the current list of banned players.
 func (c *MCRPCClient) GetBanlist(context context.Context) ([]UserBan, error) {

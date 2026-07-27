@@ -5,11 +5,7 @@ import (
 	"context"
 
 	"github.com/fi-xz/mcrpc/internal/protocol"
-	"github.com/fi-xz/mcrpc/internal/types"
 )
-
-// ServerState is an alias for types.ServerState, representing the current state of the server.
-type ServerState = types.ServerState
 
 // GetServerStatus retrieves the current status of the server including online players and version information.
 func (c *MCRPCClient) GetServerStatus(context context.Context) (ServerState, error) {
@@ -34,7 +30,7 @@ func (c *MCRPCClient) StopServer(context context.Context) (bool, error) {
 }
 
 // SendSystemMessage sends a system message to the specified players on the server.
-func (c *MCRPCClient) SendSystemMessage(context context.Context, message types.SystemMessage) (bool, error) {
+func (c *MCRPCClient) SendSystemMessage(context context.Context, message SystemMessage) (bool, error) {
 	var sent bool
 	params := protocol.SystemMessageParams{Message: message}
 	err := c.JSONRPCConn.Call(context, protocol.MethodServerSystemMessage, params, &sent)

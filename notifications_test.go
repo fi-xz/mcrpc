@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/fi-xz/mcrpc/internal/protocol"
-	"github.com/fi-xz/mcrpc/internal/types"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
@@ -120,7 +119,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		client := &MCRPCClient{}
 		var got ServerState
 		client.OnServerStatus = func(s ServerState) { got = s }
-		state := ServerState{Started: true, Version: types.Version{Name: "1.21.4", Protocol: 769}}
+		state := ServerState{Started: true, Version: Version{Name: "1.21.4", Protocol: 769}}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStatus, state))
 		if !got.Started || got.Version.Name != "1.21.4" {
 			t.Errorf("OnServerStatus got unexpected value: %+v", got)
@@ -250,7 +249,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		client := &MCRPCClient{}
 		var got TypedGameRule
 		client.OnGameruleUpdated = func(g TypedGameRule) { got = g }
-		rule := TypedGameRule{UntypedGameRule: types.UntypedGameRule{Key: "keepInventory", Value: true}, Type: "boolean"}
+		rule := TypedGameRule{UntypedGameRule: UntypedGameRule{Key: "keepInventory", Value: true}, Type: "boolean"}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationGameruleUpdated, rule))
 		if got.Key != rule.Key || got.Type != rule.Type {
 			t.Errorf("OnGameruleUpdated got %+v, want %+v", got, rule)
