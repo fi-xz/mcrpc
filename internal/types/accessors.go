@@ -45,8 +45,45 @@ func parseExpiry(raw string) (time.Time, bool) {
 	return parsed, true
 }
 
+// UsesStringValues reports whether the server represented this rule's value as
+// a JSON string rather than a native boolean or number.
+//
+// Servers up to 1.21.10 send every game rule value as a string; 1.21.11 and
+// later send native types. An update has to match, so use WithBool, WithInt, or
+// WithString to build one from a rule the server sent.
+func (g UntypedGameRule) UsesStringValues() bool {
+	_, isString := g.Value.(string)
+	return isString
+}
+
+// WithBool builds an update for this rule carrying value, matching whichever
+// representation the server used for it.
+func (g UntypedGameRule) WithBool(value bool) UntypedGameRule {
+	if g.UsesStringValues() {
+		return UntypedGameRule{Key: g.Key, Value: strconv.FormatBool(value)}
+	}
+	return UntypedGameRule{Key: g.Key, Value: value}
+}
+
+// WithInt builds an update for this rule carrying value, matching whichever
+// representation the server used for it.
+func (g UntypedGameRule) WithInt(value int) UntypedGameRule {
+	if g.UsesStringValues() {
+		return UntypedGameRule{Key: g.Key, Value: strconv.Itoa(value)}
+	}
+	return UntypedGameRule{Key: g.Key, Value: value}
+}
+
+// WithString builds an update for this rule carrying value verbatim.
+func (g UntypedGameRule) WithString(value string) UntypedGameRule {
+	return UntypedGameRule{Key: g.Key, Value: value}
+}
+
 // Bool returns the game rule value as a boolean. The second return value is
 // false if the rule does not hold a boolean.
+//
+// Servers up to 1.21.10 send booleans as the strings "true" and "false";
+// 1.21.11 and later send native JSON booleans. Both are accepted.
 func (g UntypedGameRule) Bool() (bool, bool) {
 	switch v := g.Value.(type) {
 	case bool:
@@ -62,8 +99,9 @@ func (g UntypedGameRule) Bool() (bool, bool) {
 // Int returns the game rule value as an integer. The second return value is
 // false if the rule does not hold an integer.
 //
-// Values decoded from JSON arrive as float64, and a value may also be
-// transmitted as a string; both are accepted.
+// Servers disagree about the representation: 1.21.9 and 1.21.10 send game rule
+// values as strings ("3"), while 1.21.11 and later send native JSON numbers,
+// which decode into any as float64. Both are accepted.
 func (g UntypedGameRule) Int() (int, bool) {
 	switch v := g.Value.(type) {
 	case int:

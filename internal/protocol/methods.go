@@ -3,6 +3,13 @@ package protocol
 const (
 	// Request methods
 
+	// Service discovery
+
+	// Get the OpenRPC document describing the API this server implements,
+	// including its version, every method, and their parameter schemas. Part of
+	// the JSON-RPC reserved rpc. namespace rather than minecraft:.
+	MethodDiscover = "rpc.discover"
+
 	// Allowlist management
 
 	// Get the current allowlist

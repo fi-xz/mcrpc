@@ -83,6 +83,8 @@ func TestPermanentBanOmitsExpires(t *testing.T) {
 }
 
 func TestGameRuleAccessors(t *testing.T) {
+	// Keys here are the 1.21.11+ registry form. Older servers use camelCase
+	// (keepInventory); the library passes either through unchanged.
 	t.Run("bool", func(t *testing.T) {
 		if v, ok := BoolRule("minecraft:keep_inventory", true).Bool(); !ok || !v {
 			t.Errorf("got (%v, %v), want (true, true)", v, ok)
@@ -104,8 +106,9 @@ func TestGameRuleAccessors(t *testing.T) {
 		}
 	})
 
-	// Values arriving over the wire are decoded into any, so integers show up
-	// as float64, and a value may also arrive as a string.
+	// A live server sends real JSON types: true for a boolean rule, 3 for an
+	// integer one. Decoded into any, an integer therefore arrives as float64.
+	// The string cases below are defensive only.
 	t.Run("decoded from json", func(t *testing.T) {
 		var rule TypedGameRule
 		if err := json.Unmarshal([]byte(`{"key":"minecraft:random_tick_speed","value":3,"type":"integer"}`), &rule); err != nil {

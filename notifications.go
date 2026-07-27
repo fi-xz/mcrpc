@@ -207,7 +207,13 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 				}
 			}
 
-		// World Notifications
+		// World notifications, added in API version 3.1.0 (Minecraft 26.3).
+		// Servers below that do not advertise them through rpc.discover and
+		// never send them.
+		//
+		// upgrade_progress carries a number between 0 and 1 and is rate limited
+		// to one notification per second; upgrade_failed carries a reason
+		// string. The other two take no parameters.
 		case protocol.NotificationWorldUpgradeStarted:
 			if c.handler.OnWorldUpgradeStarted != nil {
 				c.handler.OnWorldUpgradeStarted()
