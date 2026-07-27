@@ -17,23 +17,23 @@ func (c *Client) GetOperators(ctx context.Context) ([]Operator, error) {
 // SetOperators sets the operator list to the specified list, replacing the existing list.
 func (c *Client) SetOperators(ctx context.Context, operators []Operator) ([]Operator, error) {
 	var updatedOperators []Operator
-	params := protocol.SetOperatorParams{Operators: operators}
+	params := protocol.SetOperatorParams{Operators: nonNilSlice(operators)}
 	err := c.call(ctx, protocol.MethodOperatorsSet, params, &updatedOperators)
 	return updatedOperators, err
 }
 
 // AddOperators adds the specified players as operators.
-func (c *Client) AddOperators(ctx context.Context, add []Operator) ([]Operator, error) {
+func (c *Client) AddOperators(ctx context.Context, add ...Operator) ([]Operator, error) {
 	var updatedOperators []Operator
-	params := protocol.AddOperatorParams{OperatorAdd: add}
+	params := protocol.AddOperatorParams{OperatorAdd: nonNilSlice(add)}
 	err := c.call(ctx, protocol.MethodOperatorsAdd, params, &updatedOperators)
 	return updatedOperators, err
 }
 
 // RemoveOperators removes the specified players from the operator list.
-func (c *Client) RemoveOperators(ctx context.Context, remove []Player) ([]Operator, error) {
+func (c *Client) RemoveOperators(ctx context.Context, remove ...Player) ([]Operator, error) {
 	var updatedOperators []Operator
-	params := protocol.RemoveOperatorParams{OperatorRemove: remove}
+	params := protocol.RemoveOperatorParams{OperatorRemove: nonNilSlice(remove)}
 	err := c.call(ctx, protocol.MethodOperatorsRemove, params, &updatedOperators)
 	return updatedOperators, err
 }

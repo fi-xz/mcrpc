@@ -32,7 +32,7 @@ func TestKickPlayers(t *testing.T) {
 		},
 	}
 
-	kicked, err := client.KickPlayers(ctx, kickList)
+	kicked, err := client.KickPlayers(ctx, kickList...)
 	if err != nil {
 		t.Logf("KickPlayers returned error (expected if player not online): %v", err)
 	}
