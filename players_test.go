@@ -2,8 +2,6 @@ package mcrpc
 
 import (
 	"testing"
-
-	"github.com/fi-xz/mcrpc/internal/types"
 )
 
 // TestGetPlayers tests getting online players
@@ -28,7 +26,7 @@ func TestKickPlayers(t *testing.T) {
 	kickList := []KickPlayer{
 		{
 			Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"},
-			Message: types.Message{
+			Message: Message{
 				Literal: "You have been kicked for testing",
 			},
 		},

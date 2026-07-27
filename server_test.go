@@ -2,8 +2,6 @@ package mcrpc
 
 import (
 	"testing"
-
-	"github.com/fi-xz/mcrpc/internal/types"
 )
 
 // TestGetServerStatus tests getting server status
@@ -36,7 +34,7 @@ func TestSaveServer(t *testing.T) {
 func TestSendSystemMessage(t *testing.T) {
 	client, ctx := createTestClient(t)
 
-	message := types.SystemMessage{
+	message := SystemMessage{
 		ReceivingPlayers: []Player{
 			{
 				Name: "fi_xz",
@@ -44,7 +42,7 @@ func TestSendSystemMessage(t *testing.T) {
 			},
 		},
 		Overlay: false,
-		Message: types.Message{
+		Message: Message{
 			Literal: "Test system message from mcrpc",
 		},
 	}

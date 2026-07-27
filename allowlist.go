@@ -5,11 +5,7 @@ import (
 	"context"
 
 	"github.com/fi-xz/mcrpc/internal/protocol"
-	"github.com/fi-xz/mcrpc/internal/types"
 )
-
-// Player is an alias for types.Player, representing a Minecraft player.
-type Player = types.Player
 
 // GetAllowlist retrieves the current allowlist of players.
 func (c *MCRPCClient) GetAllowlist(context context.Context) ([]Player, error) {
