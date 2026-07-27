@@ -28,7 +28,7 @@ cd "$SERVER_DIR"
 java -version
 
 echo "Fetching latest PaperMC build for ${PAPERMC_VERSION}..."
-PAPER_URL=$(curl -s -A "mcrpc-github-ci/1.0.0 (https://github.com/fi-xz/mcrpc)" \
+PAPER_URL=$(curl -fsS -A "mcrpc-github-ci/1.0.0 (https://github.com/fi-xz/mcrpc)" \
   "https://fill.papermc.io/v3/projects/paper/versions/${PAPERMC_VERSION}/builds/latest" |
   jq -r '.downloads."server:default".url')
 
@@ -38,7 +38,7 @@ if [ -z "$PAPER_URL" ] || [ "$PAPER_URL" = "null" ]; then
 fi
 
 echo "Downloading PaperMC from: $PAPER_URL"
-curl -o paper.jar "$PAPER_URL"
+curl -fL -o paper.jar "$PAPER_URL"
 
 echo "eula=true" >eula.txt
 

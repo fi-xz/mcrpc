@@ -89,10 +89,10 @@ func (c *Client) Start(ctx context.Context) error {
 		// client is already started. Reap it here instead.
 		select {
 		case <-c.rpc.DisconnectNotify():
-			dead, cancel := c.rpc, c.cancel
-			c.rpc, c.cancel = nil, nil
-			cancel()
-			_ = dead.Close()
+			// The connection closed its own stream on the way down — jsonrpc2
+			// marks it closed and closes the disconnect channel together — so
+			// there is nothing left to release but this client's state.
+			c.releaseLocked()
 		default:
 			return ErrAlreadyStarted
 		}
@@ -155,6 +155,23 @@ func (c *Client) Close() error {
 	return c.closeSession(nil)
 }
 
+// releaseLocked drops the client's hold on the current session and returns the
+// connection it was holding, or nil if there was none. The caller must hold mu.
+//
+// cancel is checked rather than assumed: rpc and cancel are set and cleared
+// together, but a Client assembled field by field inside this package need not
+// respect that.
+func (c *Client) releaseLocked() *jsonrpc2.Conn {
+	rpc, cancel := c.rpc, c.cancel
+	c.rpc, c.cancel = nil, nil
+
+	if cancel != nil {
+		cancel()
+	}
+
+	return rpc
+}
+
 // closeSession tears down the current session. When want is non-nil the
 // teardown is skipped unless that connection is still the current one, so a
 // watchdog left over from an earlier session cannot close its successor.
@@ -164,11 +181,8 @@ func (c *Client) closeSession(want *jsonrpc2.Conn) error {
 		c.mu.Unlock()
 		return nil
 	}
-	rpc, cancel := c.rpc, c.cancel
-	c.rpc, c.cancel = nil, nil
+	rpc := c.releaseLocked()
 	c.mu.Unlock()
-
-	cancel()
 
 	return rpc.Close()
 }
