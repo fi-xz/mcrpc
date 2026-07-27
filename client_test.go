@@ -353,3 +353,41 @@ func TestListParametersSerialiseAsArrays(t *testing.T) {
 		t.Errorf("got %s, want {\"players\":[]}", encoded)
 	}
 }
+
+func TestStartReportsDialFailure(t *testing.T) {
+	// Nothing listens on port 1, so the dial fails rather than the handshake.
+	client := New("127.0.0.1:1", "secret")
+
+	err := client.Start(context.Background())
+	if err == nil {
+		t.Fatal("expected Start to fail")
+	}
+	if !strings.Contains(err.Error(), "dial ws://127.0.0.1:1") {
+		t.Errorf("the error should name the address dialled, got %v", err)
+	}
+	if client.IsRunning() {
+		t.Error("a failed Start must leave the client stopped")
+	}
+}
+
+func TestStartReportsANonUpgradeResponse(t *testing.T) {
+	// An endpoint that answers but never upgrades. Returning (nil, nil) here is
+	// what used to make callers dereference a nil client.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "not a websocket", http.StatusTeapot)
+	}))
+	t.Cleanup(server.Close)
+
+	client := New(strings.TrimPrefix(server.URL, "http://"), "secret")
+
+	err := client.Start(context.Background())
+	if err == nil {
+		t.Fatal("expected Start to fail")
+	}
+	if !strings.Contains(err.Error(), "418") {
+		t.Errorf("the error should carry the status the server replied with, got %v", err)
+	}
+	if client.IsRunning() {
+		t.Error("a failed handshake must leave the client stopped")
+	}
+}

@@ -104,11 +104,13 @@ func (c *Client) Start(ctx context.Context) error {
 
 	conn, response, err := dialer.DialContext(ctx, url, header)
 	if err != nil {
+		// A response that is not a protocol upgrade comes back as
+		// ErrBadHandshake with the response attached and a nil connection.
+		// The status is the useful part, so say it rather than "bad handshake".
+		if response != nil {
+			return fmt.Errorf("mcrpc: dial %s: %w (status %s)", url, err, response.Status)
+		}
 		return fmt.Errorf("mcrpc: dial %s: %w", url, err)
-	}
-	if response.StatusCode != http.StatusSwitchingProtocols {
-		conn.Close()
-		return fmt.Errorf("mcrpc: handshake failed: unexpected status %s", response.Status)
 	}
 
 	sessionCtx, cancel := context.WithCancel(ctx)
