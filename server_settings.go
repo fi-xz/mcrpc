@@ -8,14 +8,14 @@ import (
 )
 
 // GetAutosaveEnabled retrieves whether automatic world saving is enabled.
-func (c *MCRPCClient) GetAutosaveEnabled(ctx context.Context) (bool, error) {
+func (c *Client) GetAutosaveEnabled(ctx context.Context) (bool, error) {
 	var enabled bool
 	err := c.call(ctx, protocol.MethodServerSettingsAutoSaveGet, nil, &enabled)
 	return enabled, err
 }
 
 // SetAutosaveEnabled enables or disables automatic world saving.
-func (c *MCRPCClient) SetAutosaveEnabled(ctx context.Context, enable bool) (bool, error) {
+func (c *Client) SetAutosaveEnabled(ctx context.Context, enable bool) (bool, error) {
 	var enabled bool
 	params := protocol.SetAutosaveParams{Enable: enable}
 	err := c.call(ctx, protocol.MethodServerSettingsAutoSaveSet, params, &enabled)
@@ -23,14 +23,14 @@ func (c *MCRPCClient) SetAutosaveEnabled(ctx context.Context, enable bool) (bool
 }
 
 // GetDifficulty retrieves the current difficulty level of the server.
-func (c *MCRPCClient) GetDifficulty(ctx context.Context) (string, error) {
+func (c *Client) GetDifficulty(ctx context.Context) (string, error) {
 	var difficulty string
 	err := c.call(ctx, protocol.MethodServerSettingsDifficultyGet, nil, &difficulty)
 	return difficulty, err
 }
 
 // SetDifficulty sets the difficulty level of the server (peaceful, easy, normal, hard).
-func (c *MCRPCClient) SetDifficulty(ctx context.Context, difficulty string) (string, error) {
+func (c *Client) SetDifficulty(ctx context.Context, difficulty string) (string, error) {
 	var result string
 	params := protocol.SetDifficultyParams{Difficulty: difficulty}
 	err := c.call(ctx, protocol.MethodServerSettingsDifficultySet, params, &result)
@@ -38,14 +38,14 @@ func (c *MCRPCClient) SetDifficulty(ctx context.Context, difficulty string) (str
 }
 
 // GetEnforceAllowlist retrieves whether allowlist enforcement is enabled.
-func (c *MCRPCClient) GetEnforceAllowlist(ctx context.Context) (bool, error) {
+func (c *Client) GetEnforceAllowlist(ctx context.Context) (bool, error) {
 	var enforced bool
 	err := c.call(ctx, protocol.MethodServerSettingsEnforceAllowlistGet, nil, &enforced)
 	return enforced, err
 }
 
 // SetEnforceAllowlist enables or disables allowlist enforcement.
-func (c *MCRPCClient) SetEnforceAllowlist(ctx context.Context, enforce bool) (bool, error) {
+func (c *Client) SetEnforceAllowlist(ctx context.Context, enforce bool) (bool, error) {
 	var enforced bool
 	params := protocol.SetEnforceAllowlistParams{Enforce: enforce}
 	err := c.call(ctx, protocol.MethodServerSettingsEnforceAllowlistSet, params, &enforced)
@@ -53,14 +53,14 @@ func (c *MCRPCClient) SetEnforceAllowlist(ctx context.Context, enforce bool) (bo
 }
 
 // GetUseAllowlist retrieves whether the allowlist is enabled.
-func (c *MCRPCClient) GetUseAllowlist(ctx context.Context) (bool, error) {
+func (c *Client) GetUseAllowlist(ctx context.Context) (bool, error) {
 	var used bool
 	err := c.call(ctx, protocol.MethodServerSettingsUseAllowlistGet, nil, &used)
 	return used, err
 }
 
 // SetUseAllowlist enables or disables the allowlist.
-func (c *MCRPCClient) SetUseAllowlist(ctx context.Context, use bool) (bool, error) {
+func (c *Client) SetUseAllowlist(ctx context.Context, use bool) (bool, error) {
 	var used bool
 	params := protocol.SetUseAllowlistParams{Use: use}
 	err := c.call(ctx, protocol.MethodServerSettingsUseAllowlistSet, params, &used)
@@ -68,14 +68,14 @@ func (c *MCRPCClient) SetUseAllowlist(ctx context.Context, use bool) (bool, erro
 }
 
 // GetMaxPlayers retrieves the maximum number of players allowed on the server.
-func (c *MCRPCClient) GetMaxPlayers(ctx context.Context) (int, error) {
+func (c *Client) GetMaxPlayers(ctx context.Context) (int, error) {
 	var limit int
 	err := c.call(ctx, protocol.MethodServerSettingsMaxPlayersGet, nil, &limit)
 	return limit, err
 }
 
 // SetMaxPlayers sets the maximum number of players allowed on the server.
-func (c *MCRPCClient) SetMaxPlayers(ctx context.Context, limit int) (int, error) {
+func (c *Client) SetMaxPlayers(ctx context.Context, limit int) (int, error) {
 	var result int
 	params := protocol.SetMaxPlayersParams{Max: limit}
 	err := c.call(ctx, protocol.MethodServerSettingsMaxPlayersSet, params, &result)
@@ -83,14 +83,14 @@ func (c *MCRPCClient) SetMaxPlayers(ctx context.Context, limit int) (int, error)
 }
 
 // GetPauseWhenEmptySeconds retrieves the pause when empty timeout in seconds.
-func (c *MCRPCClient) GetPauseWhenEmptySeconds(ctx context.Context) (int, error) {
+func (c *Client) GetPauseWhenEmptySeconds(ctx context.Context) (int, error) {
 	var seconds int
 	err := c.call(ctx, protocol.MethodServerSettingsPauseWhenEmptyGet, nil, &seconds)
 	return seconds, err
 }
 
 // SetPauseWhenEmptySeconds sets the pause when empty timeout in seconds.
-func (c *MCRPCClient) SetPauseWhenEmptySeconds(ctx context.Context, seconds int) (int, error) {
+func (c *Client) SetPauseWhenEmptySeconds(ctx context.Context, seconds int) (int, error) {
 	var result int
 	params := protocol.SetPauseWhenEmptySecondsParams{Seconds: seconds}
 	err := c.call(ctx, protocol.MethodServerSettingsPauseWhenEmptySet, params, &result)
@@ -98,14 +98,14 @@ func (c *MCRPCClient) SetPauseWhenEmptySeconds(ctx context.Context, seconds int)
 }
 
 // GetPlayerIdleTimeout retrieves the player idle timeout in seconds.
-func (c *MCRPCClient) GetPlayerIdleTimeout(ctx context.Context) (int, error) {
+func (c *Client) GetPlayerIdleTimeout(ctx context.Context) (int, error) {
 	var seconds int
 	err := c.call(ctx, protocol.MethodServerSettingsPlayerIdleTimeoutGet, nil, &seconds)
 	return seconds, err
 }
 
 // SetPlayerIdleTimeout sets the player idle timeout in seconds.
-func (c *MCRPCClient) SetPlayerIdleTimeout(ctx context.Context, seconds int) (int, error) {
+func (c *Client) SetPlayerIdleTimeout(ctx context.Context, seconds int) (int, error) {
 	var result int
 	params := protocol.SetPlayerIdleTimeoutParams{Seconds: seconds}
 	err := c.call(ctx, protocol.MethodServerSettingsPlayerIdleTimeoutSet, params, &result)
@@ -113,14 +113,14 @@ func (c *MCRPCClient) SetPlayerIdleTimeout(ctx context.Context, seconds int) (in
 }
 
 // GetAllowFlight retrieves whether flight is allowed in Survival mode.
-func (c *MCRPCClient) GetAllowFlight(ctx context.Context) (bool, error) {
+func (c *Client) GetAllowFlight(ctx context.Context) (bool, error) {
 	var allowed bool
 	err := c.call(ctx, protocol.MethodServerSettingsAllowFlightGet, nil, &allowed)
 	return allowed, err
 }
 
 // SetAllowFlight sets whether flight is allowed in Survival mode.
-func (c *MCRPCClient) SetAllowFlight(ctx context.Context, allowed bool) (bool, error) {
+func (c *Client) SetAllowFlight(ctx context.Context, allowed bool) (bool, error) {
 	var result bool
 	params := protocol.SetAllowFlightParams{Allowed: allowed}
 	err := c.call(ctx, protocol.MethodServerSettingsAllowFlightSet, params, &result)
@@ -128,14 +128,14 @@ func (c *MCRPCClient) SetAllowFlight(ctx context.Context, allowed bool) (bool, e
 }
 
 // GetMOTD retrieves the server's message of the day.
-func (c *MCRPCClient) GetMOTD(ctx context.Context) (string, error) {
+func (c *Client) GetMOTD(ctx context.Context) (string, error) {
 	var message string
 	err := c.call(ctx, protocol.MethodServerSettingsMOTDGet, nil, &message)
 	return message, err
 }
 
 // SetMOTD sets the server's message of the day.
-func (c *MCRPCClient) SetMOTD(ctx context.Context, message string) (string, error) {
+func (c *Client) SetMOTD(ctx context.Context, message string) (string, error) {
 	var result string
 	params := protocol.SetMOTDParams{Message: message}
 	err := c.call(ctx, protocol.MethodServerSettingsMOTDSet, params, &result)
@@ -143,14 +143,14 @@ func (c *MCRPCClient) SetMOTD(ctx context.Context, message string) (string, erro
 }
 
 // GetSpawnProtectionRadius retrieves the spawn protection radius in blocks.
-func (c *MCRPCClient) GetSpawnProtectionRadius(ctx context.Context) (int, error) {
+func (c *Client) GetSpawnProtectionRadius(ctx context.Context) (int, error) {
 	var radius int
 	err := c.call(ctx, protocol.MethodServerSettingsSpawnProtectionGet, nil, &radius)
 	return radius, err
 }
 
 // SetSpawnProtectionRadius sets the spawn protection radius in blocks.
-func (c *MCRPCClient) SetSpawnProtectionRadius(ctx context.Context, radius int) (int, error) {
+func (c *Client) SetSpawnProtectionRadius(ctx context.Context, radius int) (int, error) {
 	var result int
 	params := protocol.SetSpawnProtectionRadiusParams{Radius: radius}
 	err := c.call(ctx, protocol.MethodServerSettingsSpawnProtectionSet, params, &result)
@@ -158,14 +158,14 @@ func (c *MCRPCClient) SetSpawnProtectionRadius(ctx context.Context, radius int) 
 }
 
 // GetForceGameMode retrieves whether players are forced to use the default game mode.
-func (c *MCRPCClient) GetForceGameMode(ctx context.Context) (bool, error) {
+func (c *Client) GetForceGameMode(ctx context.Context) (bool, error) {
 	var forced bool
 	err := c.call(ctx, protocol.MethodServerSettingsForceGameModeGet, nil, &forced)
 	return forced, err
 }
 
 // SetForceGameMode sets whether players are forced to use the default game mode.
-func (c *MCRPCClient) SetForceGameMode(ctx context.Context, force bool) (bool, error) {
+func (c *Client) SetForceGameMode(ctx context.Context, force bool) (bool, error) {
 	var forced bool
 	params := protocol.SetForceGameModeParams{Force: force}
 	err := c.call(ctx, protocol.MethodServerSettingsForceGameModeSet, params, &forced)
@@ -173,14 +173,14 @@ func (c *MCRPCClient) SetForceGameMode(ctx context.Context, force bool) (bool, e
 }
 
 // GetGameMode retrieves the server's default game mode.
-func (c *MCRPCClient) GetGameMode(ctx context.Context) (string, error) {
+func (c *Client) GetGameMode(ctx context.Context) (string, error) {
 	var mode string
 	err := c.call(ctx, protocol.MethodServerSettingsGameModeGet, nil, &mode)
 	return mode, err
 }
 
 // SetGameMode sets the server's default game mode (creative, survival, spectator, adventure).
-func (c *MCRPCClient) SetGameMode(ctx context.Context, mode string) (string, error) {
+func (c *Client) SetGameMode(ctx context.Context, mode string) (string, error) {
 	var result string
 	params := protocol.SetGameModeParams{Mode: mode}
 	err := c.call(ctx, protocol.MethodServerSettingsGameModeSet, params, &result)
@@ -188,14 +188,14 @@ func (c *MCRPCClient) SetGameMode(ctx context.Context, mode string) (string, err
 }
 
 // GetViewDistance retrieves the view distance in chunks.
-func (c *MCRPCClient) GetViewDistance(ctx context.Context) (int, error) {
+func (c *Client) GetViewDistance(ctx context.Context) (int, error) {
 	var distance int
 	err := c.call(ctx, protocol.MethodServerSettingsViewDistanceGet, nil, &distance)
 	return distance, err
 }
 
 // SetViewDistance sets the view distance in chunks.
-func (c *MCRPCClient) SetViewDistance(ctx context.Context, distance int) (int, error) {
+func (c *Client) SetViewDistance(ctx context.Context, distance int) (int, error) {
 	var result int
 	params := protocol.SetViewDistanceParams{Distance: distance}
 	err := c.call(ctx, protocol.MethodServerSettingsViewDistanceSet, params, &result)
@@ -203,14 +203,14 @@ func (c *MCRPCClient) SetViewDistance(ctx context.Context, distance int) (int, e
 }
 
 // GetSimulationDistance retrieves the simulation distance in chunks.
-func (c *MCRPCClient) GetSimulationDistance(ctx context.Context) (int, error) {
+func (c *Client) GetSimulationDistance(ctx context.Context) (int, error) {
 	var distance int
 	err := c.call(ctx, protocol.MethodServerSettingsSimulationDistanceGet, nil, &distance)
 	return distance, err
 }
 
 // SetSimulationDistance sets the simulation distance in chunks.
-func (c *MCRPCClient) SetSimulationDistance(ctx context.Context, distance int) (int, error) {
+func (c *Client) SetSimulationDistance(ctx context.Context, distance int) (int, error) {
 	var result int
 	params := protocol.SetSimulationDistanceParams{Distance: distance}
 	err := c.call(ctx, protocol.MethodServerSettingsSimulationDistanceSet, params, &result)
@@ -218,14 +218,14 @@ func (c *MCRPCClient) SetSimulationDistance(ctx context.Context, distance int) (
 }
 
 // GetAcceptTransfers retrieves whether the server accepts player transfers.
-func (c *MCRPCClient) GetAcceptTransfers(ctx context.Context) (bool, error) {
+func (c *Client) GetAcceptTransfers(ctx context.Context) (bool, error) {
 	var accepted bool
 	err := c.call(ctx, protocol.MethodServerSettingsAcceptTransfersGet, nil, &accepted)
 	return accepted, err
 }
 
 // SetAcceptTransfers sets whether the server accepts player transfers.
-func (c *MCRPCClient) SetAcceptTransfers(ctx context.Context, accept bool) (bool, error) {
+func (c *Client) SetAcceptTransfers(ctx context.Context, accept bool) (bool, error) {
 	var accepted bool
 	params := protocol.SetAcceptTransfersParams{Accept: accept}
 	err := c.call(ctx, protocol.MethodServerSettingsAcceptTransfersSet, params, &accepted)
@@ -233,14 +233,14 @@ func (c *MCRPCClient) SetAcceptTransfers(ctx context.Context, accept bool) (bool
 }
 
 // GetStatusHeartbeatInterval retrieves the status heartbeat interval in seconds.
-func (c *MCRPCClient) GetStatusHeartbeatInterval(ctx context.Context) (int, error) {
+func (c *Client) GetStatusHeartbeatInterval(ctx context.Context) (int, error) {
 	var seconds int
 	err := c.call(ctx, protocol.MethodServerSettingsHeartbeatIntervalGet, nil, &seconds)
 	return seconds, err
 }
 
 // SetStatusHeartbeatInterval sets the status heartbeat interval in seconds.
-func (c *MCRPCClient) SetStatusHeartbeatInterval(ctx context.Context, seconds int) (int, error) {
+func (c *Client) SetStatusHeartbeatInterval(ctx context.Context, seconds int) (int, error) {
 	var result int
 	params := protocol.SetStatusHeartbeatIntervalParams{Seconds: seconds}
 	err := c.call(ctx, protocol.MethodServerSettingsHeartbeatIntervalSet, params, &result)
@@ -248,14 +248,14 @@ func (c *MCRPCClient) SetStatusHeartbeatInterval(ctx context.Context, seconds in
 }
 
 // GetOperatorPermissionLevel retrieves the operator permission level.
-func (c *MCRPCClient) GetOperatorPermissionLevel(ctx context.Context) (int, error) {
+func (c *Client) GetOperatorPermissionLevel(ctx context.Context) (int, error) {
 	var level int
 	err := c.call(ctx, protocol.MethodServerSettingsOperatorPermissionLevelGet, nil, &level)
 	return level, err
 }
 
 // SetOperatorPermissionLevel sets the operator permission level.
-func (c *MCRPCClient) SetOperatorPermissionLevel(ctx context.Context, level int) (int, error) {
+func (c *Client) SetOperatorPermissionLevel(ctx context.Context, level int) (int, error) {
 	var result int
 	params := protocol.SetOperatorUserPermissionLevelParams{Level: level}
 	err := c.call(ctx, protocol.MethodServerSettingsOperatorPermissionLevelSet, params, &result)
@@ -263,14 +263,14 @@ func (c *MCRPCClient) SetOperatorPermissionLevel(ctx context.Context, level int)
 }
 
 // GetHideOnlinePlayers retrieves whether online player info is hidden from status queries.
-func (c *MCRPCClient) GetHideOnlinePlayers(ctx context.Context) (bool, error) {
+func (c *Client) GetHideOnlinePlayers(ctx context.Context) (bool, error) {
 	var hidden bool
 	err := c.call(ctx, protocol.MethodServerSettingsHideOnlinePlayersGet, nil, &hidden)
 	return hidden, err
 }
 
 // SetHideOnlinePlayers sets whether online player info is hidden from status queries.
-func (c *MCRPCClient) SetHideOnlinePlayers(ctx context.Context, hide bool) (bool, error) {
+func (c *Client) SetHideOnlinePlayers(ctx context.Context, hide bool) (bool, error) {
 	var hidden bool
 	params := protocol.SetHideOnlinePlayersParams{Hide: hide}
 	err := c.call(ctx, protocol.MethodServerSettingsHideOnlinePlayersSet, params, &hidden)
@@ -278,14 +278,14 @@ func (c *MCRPCClient) SetHideOnlinePlayers(ctx context.Context, hide bool) (bool
 }
 
 // GetStatusReplies retrieves whether the server responds to status requests.
-func (c *MCRPCClient) GetStatusReplies(ctx context.Context) (bool, error) {
+func (c *Client) GetStatusReplies(ctx context.Context) (bool, error) {
 	var enabled bool
 	err := c.call(ctx, protocol.MethodServerSettingsStatusRepliesGet, nil, &enabled)
 	return enabled, err
 }
 
 // SetStatusReplies sets whether the server responds to status requests.
-func (c *MCRPCClient) SetStatusReplies(ctx context.Context, enable bool) (bool, error) {
+func (c *Client) SetStatusReplies(ctx context.Context, enable bool) (bool, error) {
 	var enabled bool
 	params := protocol.SetStatusRepliesParams{Enable: enable}
 	err := c.call(ctx, protocol.MethodServerSettingsStatusRepliesSet, params, &enabled)
@@ -293,14 +293,14 @@ func (c *MCRPCClient) SetStatusReplies(ctx context.Context, enable bool) (bool, 
 }
 
 // GetEntityBroadcastRange retrieves the entity broadcast range percentage.
-func (c *MCRPCClient) GetEntityBroadcastRange(ctx context.Context) (int, error) {
+func (c *Client) GetEntityBroadcastRange(ctx context.Context) (int, error) {
 	var percentage int
 	err := c.call(ctx, protocol.MethodServerSettingsEntityBroadcastRangeGet, nil, &percentage)
 	return percentage, err
 }
 
 // SetEntityBroadcastRange sets the entity broadcast range percentage.
-func (c *MCRPCClient) SetEntityBroadcastRange(ctx context.Context, percentagePoints int) (int, error) {
+func (c *Client) SetEntityBroadcastRange(ctx context.Context, percentagePoints int) (int, error) {
 	var result int
 	params := protocol.SetEntityBroadcastRangeParams{PercentagePoints: percentagePoints}
 	err := c.call(ctx, protocol.MethodServerSettingsEntityBroadcastRangeSet, params, &result)

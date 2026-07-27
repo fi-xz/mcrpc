@@ -8,14 +8,14 @@ import (
 )
 
 // GetPlayers retrieves the list of currently online players.
-func (c *MCRPCClient) GetPlayers(ctx context.Context) ([]Player, error) {
+func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
 	var players []Player
 	err := c.call(ctx, protocol.MethodPlayersGet, nil, &players)
 	return players, err
 }
 
 // KickPlayers kicks the specified players from the server with custom messages.
-func (c *MCRPCClient) KickPlayers(ctx context.Context, kick []KickPlayer) ([]Player, error) {
+func (c *Client) KickPlayers(ctx context.Context, kick []KickPlayer) ([]Player, error) {
 	var kicked []Player
 	params := protocol.KickPlayerParams{KickPlayers: kick}
 	err := c.call(ctx, protocol.MethodPlayersKick, params, &kicked)
