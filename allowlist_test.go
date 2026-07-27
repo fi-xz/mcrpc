@@ -58,7 +58,7 @@ func TestAllowlistAdd(t *testing.T) {
 		{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"},
 	}
 
-	updatedPlayers, err := client.AddAllowlist(ctx, playersToAdd)
+	updatedPlayers, err := client.AddAllowlist(ctx, playersToAdd...)
 	if err != nil {
 		t.Errorf("AddAllowlist failed: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestAllowlistRemove(t *testing.T) {
 		{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"},
 	}
 
-	updatedPlayers, err := client.RemoveAllowlist(ctx, playersToRemove)
+	updatedPlayers, err := client.RemoveAllowlist(ctx, playersToRemove...)
 	if err != nil {
 		t.Errorf("RemoveAllowlist failed: %v", err)
 	}
@@ -94,7 +94,7 @@ func TestAllowlistClear(t *testing.T) {
 	testPlayer := []Player{
 		{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"},
 	}
-	_, err := client.AddAllowlist(ctx, testPlayer)
+	_, err := client.AddAllowlist(ctx, testPlayer...)
 	if err != nil {
 		t.Logf("Warning: Failed to add test player: %v", err)
 	}

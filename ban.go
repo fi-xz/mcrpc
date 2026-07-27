@@ -17,23 +17,23 @@ func (c *Client) GetBanlist(ctx context.Context) ([]UserBan, error) {
 // SetBanlist sets the ban list to the specified list of bans, replacing the existing list.
 func (c *Client) SetBanlist(ctx context.Context, bans []UserBan) ([]UserBan, error) {
 	var updatedBanlist []UserBan
-	params := protocol.SetBanlistParams{Banlist: bans}
+	params := protocol.SetBanlistParams{Banlist: nonNilSlice(bans)}
 	err := c.call(ctx, protocol.MethodBansSet, params, &updatedBanlist)
 	return updatedBanlist, err
 }
 
 // AddBanlist adds the specified bans to the ban list.
-func (c *Client) AddBanlist(ctx context.Context, add []UserBan) ([]UserBan, error) {
+func (c *Client) AddBanlist(ctx context.Context, add ...UserBan) ([]UserBan, error) {
 	var updatedBanlist []UserBan
-	params := protocol.AddBanlistParams{BanAdd: add}
+	params := protocol.AddBanlistParams{BanAdd: nonNilSlice(add)}
 	err := c.call(ctx, protocol.MethodBansAdd, params, &updatedBanlist)
 	return updatedBanlist, err
 }
 
 // RemoveBanlist removes the specified players from the ban list.
-func (c *Client) RemoveBanlist(ctx context.Context, remove []Player) ([]UserBan, error) {
+func (c *Client) RemoveBanlist(ctx context.Context, remove ...Player) ([]UserBan, error) {
 	var updatedBanlist []UserBan
-	params := protocol.RemoveBanlistParams{BanRemove: remove}
+	params := protocol.RemoveBanlistParams{BanRemove: nonNilSlice(remove)}
 	err := c.call(ctx, protocol.MethodBansRemove, params, &updatedBanlist)
 	return updatedBanlist, err
 }
@@ -55,23 +55,23 @@ func (c *Client) GetIPBanlist(ctx context.Context) ([]IPBan, error) {
 // SetIPBanlist sets the IP ban list to the specified list, replacing the existing list.
 func (c *Client) SetIPBanlist(ctx context.Context, banlist []IPBan) ([]IPBan, error) {
 	var updatedIPBanlist []IPBan
-	params := protocol.SetIPBanlistParams{IPBanlist: banlist}
+	params := protocol.SetIPBanlistParams{IPBanlist: nonNilSlice(banlist)}
 	err := c.call(ctx, protocol.MethodIPBansSet, params, &updatedIPBanlist)
 	return updatedIPBanlist, err
 }
 
 // AddIPBanlist adds the specified IP bans to the ban list.
-func (c *Client) AddIPBanlist(ctx context.Context, add []IncomingIPBan) ([]IPBan, error) {
+func (c *Client) AddIPBanlist(ctx context.Context, add ...IncomingIPBan) ([]IPBan, error) {
 	var updatedIPBanlist []IPBan
-	params := protocol.AddIPBanlistParams{IPBanAdd: add}
+	params := protocol.AddIPBanlistParams{IPBanAdd: nonNilSlice(add)}
 	err := c.call(ctx, protocol.MethodIPBansAdd, params, &updatedIPBanlist)
 	return updatedIPBanlist, err
 }
 
 // RemoveIPBanlist removes the specified IP addresses from the ban list.
-func (c *Client) RemoveIPBanlist(ctx context.Context, ip []string) ([]IPBan, error) {
+func (c *Client) RemoveIPBanlist(ctx context.Context, ip ...string) ([]IPBan, error) {
 	var updatedIPBanlist []IPBan
-	params := protocol.RemoveIPBanlistParams{IPBanRemove: ip}
+	params := protocol.RemoveIPBanlistParams{IPBanRemove: nonNilSlice(ip)}
 	err := c.call(ctx, protocol.MethodIPBansRemove, params, &updatedIPBanlist)
 	return updatedIPBanlist, err
 }

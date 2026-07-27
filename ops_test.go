@@ -56,7 +56,7 @@ func TestAddOperators(t *testing.T) {
 		},
 	}
 
-	updatedOps, err := client.AddOperators(ctx, opsToAdd)
+	updatedOps, err := client.AddOperators(ctx, opsToAdd...)
 	if err != nil {
 		t.Errorf("AddOperators failed: %v", err)
 	}
@@ -74,7 +74,7 @@ func TestRemoveOperators(t *testing.T) {
 		{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"},
 	}
 
-	updatedOps, err := client.RemoveOperators(ctx, opsToRemove)
+	updatedOps, err := client.RemoveOperators(ctx, opsToRemove...)
 	if err != nil {
 		t.Errorf("RemoveOperators failed: %v", err)
 	}

@@ -2,6 +2,7 @@ package mcrpc
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -283,5 +284,21 @@ func TestServerErrorSurfacesAsError(t *testing.T) {
 	var rpcErr *jsonrpc2.Error
 	if !errors.As(err, &rpcErr) {
 		t.Error("the underlying jsonrpc2.Error should stay reachable")
+	}
+}
+
+func TestListParametersSerialiseAsArrays(t *testing.T) {
+	// A variadic call with no arguments must not send null where the protocol
+	// expects a list.
+	params := struct {
+		Players []Player `json:"players"`
+	}{Players: nonNilSlice[Player](nil)}
+
+	encoded, err := json.Marshal(params)
+	if err != nil {
+		t.Fatalf("Marshal failed: %v", err)
+	}
+	if string(encoded) != `{"players":[]}` {
+		t.Errorf("got %s, want {\"players\":[]}", encoded)
 	}
 }

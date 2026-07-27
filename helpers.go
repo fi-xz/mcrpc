@@ -53,3 +53,13 @@ func IntRule(key string, value int) UntypedGameRule {
 func StringRule(key, value string) UntypedGameRule {
 	return UntypedGameRule{Key: key, Value: value}
 }
+
+// nonNilSlice substitutes an empty slice for a nil one, so that a list-valued
+// request parameter serialises as [] rather than null. A variadic call with no
+// arguments, and an explicit "replace the list with nothing", both produce nil.
+func nonNilSlice[T any](values []T) []T {
+	if values == nil {
+		return []T{}
+	}
+	return values
+}

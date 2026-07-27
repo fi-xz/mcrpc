@@ -15,9 +15,9 @@ func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
 }
 
 // KickPlayers kicks the specified players from the server with custom messages.
-func (c *Client) KickPlayers(ctx context.Context, kick []KickPlayer) ([]Player, error) {
+func (c *Client) KickPlayers(ctx context.Context, kick ...KickPlayer) ([]Player, error) {
 	var kicked []Player
-	params := protocol.KickPlayerParams{KickPlayers: kick}
+	params := protocol.KickPlayerParams{KickPlayers: nonNilSlice(kick)}
 	err := c.call(ctx, protocol.MethodPlayersKick, params, &kicked)
 	return kicked, err
 }

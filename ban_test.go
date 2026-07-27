@@ -58,7 +58,7 @@ func TestBanlistAdd(t *testing.T) {
 		},
 	}
 
-	updatedBans, err := client.AddBanlist(ctx, bansToAdd)
+	updatedBans, err := client.AddBanlist(ctx, bansToAdd...)
 	if err != nil {
 		t.Errorf("AddBanlist failed: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestBanlistRemove(t *testing.T) {
 		{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"},
 	}
 
-	updatedBans, err := client.RemoveBanlist(ctx, playersToRemove)
+	updatedBans, err := client.RemoveBanlist(ctx, playersToRemove...)
 	if err != nil {
 		t.Errorf("RemoveBanlist failed: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestIPBanlistAdd(t *testing.T) {
 		},
 	}
 
-	updatedBans, err := client.AddIPBanlist(ctx, bansToAdd)
+	updatedBans, err := client.AddIPBanlist(ctx, bansToAdd...)
 	if err != nil {
 		t.Errorf("AddIPBanlist failed: %v", err)
 	}
@@ -171,7 +171,7 @@ func TestIPBanlistRemove(t *testing.T) {
 
 	ipsToRemove := []string{"192.168.1.100"}
 
-	updatedBans, err := client.RemoveIPBanlist(ctx, ipsToRemove)
+	updatedBans, err := client.RemoveIPBanlist(ctx, ipsToRemove...)
 	if err != nil {
 		t.Errorf("RemoveIPBanlist failed: %v", err)
 	}
