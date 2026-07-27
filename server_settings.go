@@ -10,7 +10,7 @@ import (
 // GetAutosaveEnabled retrieves whether automatic world saving is enabled.
 func (c *MCRPCClient) GetAutosaveEnabled(ctx context.Context) (bool, error) {
 	var enabled bool
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsAutoSaveGet, nil, &enabled)
+	err := c.call(ctx, protocol.MethodServerSettingsAutoSaveGet, nil, &enabled)
 	return enabled, err
 }
 
@@ -18,14 +18,14 @@ func (c *MCRPCClient) GetAutosaveEnabled(ctx context.Context) (bool, error) {
 func (c *MCRPCClient) SetAutosaveEnabled(ctx context.Context, enable bool) (bool, error) {
 	var enabled bool
 	params := protocol.SetAutosaveParams{Enable: enable}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsAutoSaveSet, params, &enabled)
+	err := c.call(ctx, protocol.MethodServerSettingsAutoSaveSet, params, &enabled)
 	return enabled, err
 }
 
 // GetDifficulty retrieves the current difficulty level of the server.
 func (c *MCRPCClient) GetDifficulty(ctx context.Context) (string, error) {
 	var difficulty string
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsDifficultyGet, nil, &difficulty)
+	err := c.call(ctx, protocol.MethodServerSettingsDifficultyGet, nil, &difficulty)
 	return difficulty, err
 }
 
@@ -33,14 +33,14 @@ func (c *MCRPCClient) GetDifficulty(ctx context.Context) (string, error) {
 func (c *MCRPCClient) SetDifficulty(ctx context.Context, difficulty string) (string, error) {
 	var result string
 	params := protocol.SetDifficultyParams{Difficulty: difficulty}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsDifficultySet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsDifficultySet, params, &result)
 	return result, err
 }
 
 // GetEnforceAllowlist retrieves whether allowlist enforcement is enabled.
 func (c *MCRPCClient) GetEnforceAllowlist(ctx context.Context) (bool, error) {
 	var enforced bool
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsEnforceAllowlistGet, nil, &enforced)
+	err := c.call(ctx, protocol.MethodServerSettingsEnforceAllowlistGet, nil, &enforced)
 	return enforced, err
 }
 
@@ -48,14 +48,14 @@ func (c *MCRPCClient) GetEnforceAllowlist(ctx context.Context) (bool, error) {
 func (c *MCRPCClient) SetEnforceAllowlist(ctx context.Context, enforce bool) (bool, error) {
 	var enforced bool
 	params := protocol.SetEnforceAllowlistParams{Enforce: enforce}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsEnforceAllowlistSet, params, &enforced)
+	err := c.call(ctx, protocol.MethodServerSettingsEnforceAllowlistSet, params, &enforced)
 	return enforced, err
 }
 
 // GetUseAllowlist retrieves whether the allowlist is enabled.
 func (c *MCRPCClient) GetUseAllowlist(ctx context.Context) (bool, error) {
 	var used bool
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsUseAllowlistGet, nil, &used)
+	err := c.call(ctx, protocol.MethodServerSettingsUseAllowlistGet, nil, &used)
 	return used, err
 }
 
@@ -63,14 +63,14 @@ func (c *MCRPCClient) GetUseAllowlist(ctx context.Context) (bool, error) {
 func (c *MCRPCClient) SetUseAllowlist(ctx context.Context, use bool) (bool, error) {
 	var used bool
 	params := protocol.SetUseAllowlistParams{Use: use}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsUseAllowlistSet, params, &used)
+	err := c.call(ctx, protocol.MethodServerSettingsUseAllowlistSet, params, &used)
 	return used, err
 }
 
 // GetMaxPlayers retrieves the maximum number of players allowed on the server.
 func (c *MCRPCClient) GetMaxPlayers(ctx context.Context) (int, error) {
 	var limit int
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsMaxPlayersGet, nil, &limit)
+	err := c.call(ctx, protocol.MethodServerSettingsMaxPlayersGet, nil, &limit)
 	return limit, err
 }
 
@@ -78,14 +78,14 @@ func (c *MCRPCClient) GetMaxPlayers(ctx context.Context) (int, error) {
 func (c *MCRPCClient) SetMaxPlayers(ctx context.Context, limit int) (int, error) {
 	var result int
 	params := protocol.SetMaxPlayersParams{Max: limit}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsMaxPlayersSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsMaxPlayersSet, params, &result)
 	return result, err
 }
 
 // GetPauseWhenEmptySeconds retrieves the pause when empty timeout in seconds.
 func (c *MCRPCClient) GetPauseWhenEmptySeconds(ctx context.Context) (int, error) {
 	var seconds int
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsPauseWhenEmptyGet, nil, &seconds)
+	err := c.call(ctx, protocol.MethodServerSettingsPauseWhenEmptyGet, nil, &seconds)
 	return seconds, err
 }
 
@@ -93,14 +93,14 @@ func (c *MCRPCClient) GetPauseWhenEmptySeconds(ctx context.Context) (int, error)
 func (c *MCRPCClient) SetPauseWhenEmptySeconds(ctx context.Context, seconds int) (int, error) {
 	var result int
 	params := protocol.SetPauseWhenEmptySecondsParams{Seconds: seconds}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsPauseWhenEmptySet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsPauseWhenEmptySet, params, &result)
 	return result, err
 }
 
 // GetPlayerIdleTimeout retrieves the player idle timeout in seconds.
 func (c *MCRPCClient) GetPlayerIdleTimeout(ctx context.Context) (int, error) {
 	var seconds int
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsPlayerIdleTimeoutGet, nil, &seconds)
+	err := c.call(ctx, protocol.MethodServerSettingsPlayerIdleTimeoutGet, nil, &seconds)
 	return seconds, err
 }
 
@@ -108,14 +108,14 @@ func (c *MCRPCClient) GetPlayerIdleTimeout(ctx context.Context) (int, error) {
 func (c *MCRPCClient) SetPlayerIdleTimeout(ctx context.Context, seconds int) (int, error) {
 	var result int
 	params := protocol.SetPlayerIdleTimeoutParams{Seconds: seconds}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsPlayerIdleTimeoutSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsPlayerIdleTimeoutSet, params, &result)
 	return result, err
 }
 
 // GetAllowFlight retrieves whether flight is allowed in Survival mode.
 func (c *MCRPCClient) GetAllowFlight(ctx context.Context) (bool, error) {
 	var allowed bool
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsAllowFlightGet, nil, &allowed)
+	err := c.call(ctx, protocol.MethodServerSettingsAllowFlightGet, nil, &allowed)
 	return allowed, err
 }
 
@@ -123,14 +123,14 @@ func (c *MCRPCClient) GetAllowFlight(ctx context.Context) (bool, error) {
 func (c *MCRPCClient) SetAllowFlight(ctx context.Context, allowed bool) (bool, error) {
 	var result bool
 	params := protocol.SetAllowFlightParams{Allowed: allowed}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsAllowFlightSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsAllowFlightSet, params, &result)
 	return result, err
 }
 
 // GetMOTD retrieves the server's message of the day.
 func (c *MCRPCClient) GetMOTD(ctx context.Context) (string, error) {
 	var message string
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsMOTDGet, nil, &message)
+	err := c.call(ctx, protocol.MethodServerSettingsMOTDGet, nil, &message)
 	return message, err
 }
 
@@ -138,14 +138,14 @@ func (c *MCRPCClient) GetMOTD(ctx context.Context) (string, error) {
 func (c *MCRPCClient) SetMOTD(ctx context.Context, message string) (string, error) {
 	var result string
 	params := protocol.SetMOTDParams{Message: message}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsMOTDSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsMOTDSet, params, &result)
 	return result, err
 }
 
 // GetSpawnProtectionRadius retrieves the spawn protection radius in blocks.
 func (c *MCRPCClient) GetSpawnProtectionRadius(ctx context.Context) (int, error) {
 	var radius int
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsSpawnProtectionGet, nil, &radius)
+	err := c.call(ctx, protocol.MethodServerSettingsSpawnProtectionGet, nil, &radius)
 	return radius, err
 }
 
@@ -153,14 +153,14 @@ func (c *MCRPCClient) GetSpawnProtectionRadius(ctx context.Context) (int, error)
 func (c *MCRPCClient) SetSpawnProtectionRadius(ctx context.Context, radius int) (int, error) {
 	var result int
 	params := protocol.SetSpawnProtectionRadiusParams{Radius: radius}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsSpawnProtectionSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsSpawnProtectionSet, params, &result)
 	return result, err
 }
 
 // GetForceGameMode retrieves whether players are forced to use the default game mode.
 func (c *MCRPCClient) GetForceGameMode(ctx context.Context) (bool, error) {
 	var forced bool
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsForceGameModeGet, nil, &forced)
+	err := c.call(ctx, protocol.MethodServerSettingsForceGameModeGet, nil, &forced)
 	return forced, err
 }
 
@@ -168,14 +168,14 @@ func (c *MCRPCClient) GetForceGameMode(ctx context.Context) (bool, error) {
 func (c *MCRPCClient) SetForceGameMode(ctx context.Context, force bool) (bool, error) {
 	var forced bool
 	params := protocol.SetForceGameModeParams{Force: force}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsForceGameModeSet, params, &forced)
+	err := c.call(ctx, protocol.MethodServerSettingsForceGameModeSet, params, &forced)
 	return forced, err
 }
 
 // GetGameMode retrieves the server's default game mode.
 func (c *MCRPCClient) GetGameMode(ctx context.Context) (string, error) {
 	var mode string
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsGameModeGet, nil, &mode)
+	err := c.call(ctx, protocol.MethodServerSettingsGameModeGet, nil, &mode)
 	return mode, err
 }
 
@@ -183,14 +183,14 @@ func (c *MCRPCClient) GetGameMode(ctx context.Context) (string, error) {
 func (c *MCRPCClient) SetGameMode(ctx context.Context, mode string) (string, error) {
 	var result string
 	params := protocol.SetGameModeParams{Mode: mode}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsGameModeSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsGameModeSet, params, &result)
 	return result, err
 }
 
 // GetViewDistance retrieves the view distance in chunks.
 func (c *MCRPCClient) GetViewDistance(ctx context.Context) (int, error) {
 	var distance int
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsViewDistanceGet, nil, &distance)
+	err := c.call(ctx, protocol.MethodServerSettingsViewDistanceGet, nil, &distance)
 	return distance, err
 }
 
@@ -198,14 +198,14 @@ func (c *MCRPCClient) GetViewDistance(ctx context.Context) (int, error) {
 func (c *MCRPCClient) SetViewDistance(ctx context.Context, distance int) (int, error) {
 	var result int
 	params := protocol.SetViewDistanceParams{Distance: distance}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsViewDistanceSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsViewDistanceSet, params, &result)
 	return result, err
 }
 
 // GetSimulationDistance retrieves the simulation distance in chunks.
 func (c *MCRPCClient) GetSimulationDistance(ctx context.Context) (int, error) {
 	var distance int
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsSimulationDistanceGet, nil, &distance)
+	err := c.call(ctx, protocol.MethodServerSettingsSimulationDistanceGet, nil, &distance)
 	return distance, err
 }
 
@@ -213,14 +213,14 @@ func (c *MCRPCClient) GetSimulationDistance(ctx context.Context) (int, error) {
 func (c *MCRPCClient) SetSimulationDistance(ctx context.Context, distance int) (int, error) {
 	var result int
 	params := protocol.SetSimulationDistanceParams{Distance: distance}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsSimulationDistanceSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsSimulationDistanceSet, params, &result)
 	return result, err
 }
 
 // GetAcceptTransfers retrieves whether the server accepts player transfers.
 func (c *MCRPCClient) GetAcceptTransfers(ctx context.Context) (bool, error) {
 	var accepted bool
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsAcceptTransfersGet, nil, &accepted)
+	err := c.call(ctx, protocol.MethodServerSettingsAcceptTransfersGet, nil, &accepted)
 	return accepted, err
 }
 
@@ -228,14 +228,14 @@ func (c *MCRPCClient) GetAcceptTransfers(ctx context.Context) (bool, error) {
 func (c *MCRPCClient) SetAcceptTransfers(ctx context.Context, accept bool) (bool, error) {
 	var accepted bool
 	params := protocol.SetAcceptTransfersParams{Accept: accept}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsAcceptTransfersSet, params, &accepted)
+	err := c.call(ctx, protocol.MethodServerSettingsAcceptTransfersSet, params, &accepted)
 	return accepted, err
 }
 
 // GetStatusHeartbeatInterval retrieves the status heartbeat interval in seconds.
 func (c *MCRPCClient) GetStatusHeartbeatInterval(ctx context.Context) (int, error) {
 	var seconds int
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsHeartbeatIntervalGet, nil, &seconds)
+	err := c.call(ctx, protocol.MethodServerSettingsHeartbeatIntervalGet, nil, &seconds)
 	return seconds, err
 }
 
@@ -243,14 +243,14 @@ func (c *MCRPCClient) GetStatusHeartbeatInterval(ctx context.Context) (int, erro
 func (c *MCRPCClient) SetStatusHeartbeatInterval(ctx context.Context, seconds int) (int, error) {
 	var result int
 	params := protocol.SetStatusHeartbeatIntervalParams{Seconds: seconds}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsHeartbeatIntervalSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsHeartbeatIntervalSet, params, &result)
 	return result, err
 }
 
 // GetOperatorPermissionLevel retrieves the operator permission level.
 func (c *MCRPCClient) GetOperatorPermissionLevel(ctx context.Context) (int, error) {
 	var level int
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsOperatorPermissionLevelGet, nil, &level)
+	err := c.call(ctx, protocol.MethodServerSettingsOperatorPermissionLevelGet, nil, &level)
 	return level, err
 }
 
@@ -258,14 +258,14 @@ func (c *MCRPCClient) GetOperatorPermissionLevel(ctx context.Context) (int, erro
 func (c *MCRPCClient) SetOperatorPermissionLevel(ctx context.Context, level int) (int, error) {
 	var result int
 	params := protocol.SetOperatorUserPermissionLevelParams{Level: level}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsOperatorPermissionLevelSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsOperatorPermissionLevelSet, params, &result)
 	return result, err
 }
 
 // GetHideOnlinePlayers retrieves whether online player info is hidden from status queries.
 func (c *MCRPCClient) GetHideOnlinePlayers(ctx context.Context) (bool, error) {
 	var hidden bool
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsHideOnlinePlayersGet, nil, &hidden)
+	err := c.call(ctx, protocol.MethodServerSettingsHideOnlinePlayersGet, nil, &hidden)
 	return hidden, err
 }
 
@@ -273,14 +273,14 @@ func (c *MCRPCClient) GetHideOnlinePlayers(ctx context.Context) (bool, error) {
 func (c *MCRPCClient) SetHideOnlinePlayers(ctx context.Context, hide bool) (bool, error) {
 	var hidden bool
 	params := protocol.SetHideOnlinePlayersParams{Hide: hide}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsHideOnlinePlayersSet, params, &hidden)
+	err := c.call(ctx, protocol.MethodServerSettingsHideOnlinePlayersSet, params, &hidden)
 	return hidden, err
 }
 
 // GetStatusReplies retrieves whether the server responds to status requests.
 func (c *MCRPCClient) GetStatusReplies(ctx context.Context) (bool, error) {
 	var enabled bool
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsStatusRepliesGet, nil, &enabled)
+	err := c.call(ctx, protocol.MethodServerSettingsStatusRepliesGet, nil, &enabled)
 	return enabled, err
 }
 
@@ -288,14 +288,14 @@ func (c *MCRPCClient) GetStatusReplies(ctx context.Context) (bool, error) {
 func (c *MCRPCClient) SetStatusReplies(ctx context.Context, enable bool) (bool, error) {
 	var enabled bool
 	params := protocol.SetStatusRepliesParams{Enable: enable}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsStatusRepliesSet, params, &enabled)
+	err := c.call(ctx, protocol.MethodServerSettingsStatusRepliesSet, params, &enabled)
 	return enabled, err
 }
 
 // GetEntityBroadcastRange retrieves the entity broadcast range percentage.
 func (c *MCRPCClient) GetEntityBroadcastRange(ctx context.Context) (int, error) {
 	var percentage int
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsEntityBroadcastRangeGet, nil, &percentage)
+	err := c.call(ctx, protocol.MethodServerSettingsEntityBroadcastRangeGet, nil, &percentage)
 	return percentage, err
 }
 
@@ -303,6 +303,6 @@ func (c *MCRPCClient) GetEntityBroadcastRange(ctx context.Context) (int, error) 
 func (c *MCRPCClient) SetEntityBroadcastRange(ctx context.Context, percentagePoints int) (int, error) {
 	var result int
 	params := protocol.SetEntityBroadcastRangeParams{PercentagePoints: percentagePoints}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodServerSettingsEntityBroadcastRangeSet, params, &result)
+	err := c.call(ctx, protocol.MethodServerSettingsEntityBroadcastRangeSet, params, &result)
 	return result, err
 }

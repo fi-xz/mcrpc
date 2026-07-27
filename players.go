@@ -10,7 +10,7 @@ import (
 // GetPlayers retrieves the list of currently online players.
 func (c *MCRPCClient) GetPlayers(ctx context.Context) ([]Player, error) {
 	var players []Player
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodPlayersGet, nil, &players)
+	err := c.call(ctx, protocol.MethodPlayersGet, nil, &players)
 	return players, err
 }
 
@@ -18,6 +18,6 @@ func (c *MCRPCClient) GetPlayers(ctx context.Context) ([]Player, error) {
 func (c *MCRPCClient) KickPlayers(ctx context.Context, kick []KickPlayer) ([]Player, error) {
 	var kicked []Player
 	params := protocol.KickPlayerParams{KickPlayers: kick}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodPlayersKick, params, &kicked)
+	err := c.call(ctx, protocol.MethodPlayersKick, params, &kicked)
 	return kicked, err
 }
