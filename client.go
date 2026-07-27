@@ -82,7 +82,20 @@ func (c *Client) Start(ctx context.Context) error {
 	defer c.mu.Unlock()
 
 	if c.rpc != nil {
-		return ErrAlreadyStarted
+		// The session may already be over without the watchdog having reaped it:
+		// DisconnectNotify fires the moment the connection drops, and the
+		// goroutine that clears this state runs afterwards. A caller
+		// reconnecting on that signal would otherwise race it and be told the
+		// client is already started. Reap it here instead.
+		select {
+		case <-c.rpc.DisconnectNotify():
+			dead, cancel := c.rpc, c.cancel
+			c.rpc, c.cancel = nil, nil
+			cancel()
+			_ = dead.Close()
+		default:
+			return ErrAlreadyStarted
+		}
 	}
 
 	scheme := "ws"
@@ -160,9 +173,22 @@ func (c *Client) closeSession(want *jsonrpc2.Conn) error {
 	return rpc.Close()
 }
 
-// IsRunning reports whether the client currently holds a connection.
+// IsRunning reports whether the client currently holds a live connection.
+//
+// A session that has dropped reports false straight away, without waiting for
+// the watchdog to clear the client's state.
 func (c *Client) IsRunning() bool {
-	return c.conn() != nil
+	conn := c.conn()
+	if conn == nil {
+		return false
+	}
+
+	select {
+	case <-conn.DisconnectNotify():
+		return false
+	default:
+		return true
+	}
 }
 
 // DisconnectNotify returns a channel closed when the current session ends.

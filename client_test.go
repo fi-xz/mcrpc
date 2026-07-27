@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -187,11 +188,8 @@ func TestContextCancellationClosesSession(t *testing.T) {
 		t.Fatal("cancelling the context did not close the session")
 	}
 
-	// Give the watchdog a moment to clear the client's state.
-	deadline := time.Now().Add(2 * time.Second)
-	for client.IsRunning() && time.Now().Before(deadline) {
-		time.Sleep(10 * time.Millisecond)
-	}
+	// IsRunning reports the dropped session straight away, without waiting for
+	// the watchdog.
 	if client.IsRunning() {
 		t.Error("client still reports itself running after its context was cancelled")
 	}
@@ -454,5 +452,69 @@ func TestNotificationWithNoParameters(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("an empty argument list was not reported")
+	}
+}
+
+// TestReconnectImmediatelyAfterDisconnect reproduces the reconnect pattern the
+// documentation recommends: wait on DisconnectNotify, then Start again.
+//
+// DisconnectNotify fires from jsonrpc2 as soon as the connection drops, while
+// the watchdog that clears this client's state runs afterwards. A caller that
+// reconnects the moment it is told the session ended must not be refused.
+func TestReconnectImmediatelyAfterDisconnect(t *testing.T) {
+	server := newFakeServer(t, okResponder)
+	client := New(server.addr(), "secret")
+
+	if err := client.Start(context.Background()); err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+	t.Cleanup(func() { _ = client.Close() })
+
+	disconnected := client.DisconnectNotify()
+
+	// Hang up from the server side.
+	if err := server.nextConn(t).Close(); err != nil {
+		t.Fatalf("server failed to hang up: %v", err)
+	}
+
+	select {
+	case <-disconnected:
+	case <-time.After(2 * time.Second):
+		t.Fatal("the session never reported a disconnect")
+	}
+
+	if err := client.Start(context.Background()); err != nil {
+		t.Fatalf("reconnecting straight after a disconnect failed: %v", err)
+	}
+}
+
+// TestIsRunningSeesADroppedSessionBeforeItIsReaped pins the window IsRunning
+// has to see through: the connection is gone but nothing has cleared the
+// client's reference to it yet.
+//
+// The client is assembled by hand rather than started, because a started client
+// has a watchdog racing to reap exactly this state.
+func TestIsRunningSeesADroppedSessionBeforeItIsReaped(t *testing.T) {
+	local, remote := net.Pipe()
+	if err := remote.Close(); err != nil {
+		t.Fatalf("could not close the far end: %v", err)
+	}
+
+	conn := jsonrpc2.NewConn(
+		context.Background(),
+		jsonrpc2.NewPlainObjectStream(local),
+		handlerFunc(func(context.Context, *jsonrpc2.Conn, *jsonrpc2.Request) {}),
+	)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	select {
+	case <-conn.DisconnectNotify():
+	case <-time.After(2 * time.Second):
+		t.Fatal("the connection never reported a disconnect")
+	}
+
+	client := &Client{rpc: conn}
+	if client.IsRunning() {
+		t.Error("a dropped connection should not report the client as running")
 	}
 }
