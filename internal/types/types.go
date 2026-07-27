@@ -29,10 +29,10 @@ type KickPlayer struct {
 
 // IPBan represents a banned IP address.
 type IPBan struct {
-	Reason  string `json:"reason"`  // Reason for the ban
-	Expires string `json:"expires"` // Expiration time in ISO 8601 format, empty if permanent
-	IP      string `json:"ip"`      // The banned IP address
-	Source  string `json:"source"`  // Who issued the ban
+	Reason  string `json:"reason"`            // Reason for the ban
+	Expires string `json:"expires,omitempty"` // Expiration time in ISO 8601 format, omitted if permanent
+	IP      string `json:"ip"`                // The banned IP address
+	Source  string `json:"source"`            // Who issued the ban
 }
 
 // TypedGameRule represents a game rule with a known type.
@@ -43,18 +43,18 @@ type TypedGameRule struct {
 
 // UserBan represents a banned player.
 type UserBan struct {
-	Reason  string `json:"reason"`  // Reason for the ban
-	Expires string `json:"expires"` // Expiration time in ISO 8601 format, empty if permanent
-	Source  string `json:"source"`  // Who issued the ban
-	Player  Player `json:"player"`  // The banned player
+	Reason  string `json:"reason"`            // Reason for the ban
+	Expires string `json:"expires,omitempty"` // Expiration time in ISO 8601 format, omitted if permanent
+	Source  string `json:"source"`            // Who issued the ban
+	Player  Player `json:"player"`            // The banned player
 }
 
 // Message represents a message that can be sent to players.
 // It can be either translatable or a literal string.
 type Message struct {
-	Translatable       string   `json:"translatable"`       // Translation key
-	TranslatableParams []string `json:"translatableParams"` // Parameters for translation
-	Literal            string   `json:"literal"`            // Literal message text
+	Translatable       string   `json:"translatable,omitempty"`       // Translation key
+	TranslatableParams []string `json:"translatableParams,omitempty"` // Parameters for translation
+	Literal            string   `json:"literal,omitempty"`            // Literal message text
 }
 
 // Version represents the Minecraft server version information.
