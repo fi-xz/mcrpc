@@ -10,7 +10,7 @@ import (
 // GetAllowlist retrieves the current allowlist of players.
 func (c *MCRPCClient) GetAllowlist(ctx context.Context) ([]Player, error) {
 	var allowlistPlayers []Player
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodAllowlistGet, nil, &allowlistPlayers)
+	err := c.call(ctx, protocol.MethodAllowlistGet, nil, &allowlistPlayers)
 	return allowlistPlayers, err
 }
 
@@ -18,7 +18,7 @@ func (c *MCRPCClient) GetAllowlist(ctx context.Context) ([]Player, error) {
 func (c *MCRPCClient) SetAllowlist(ctx context.Context, players []Player) ([]Player, error) {
 	var updatedAllowlist []Player
 	params := protocol.SetAllowlistParams{Allowlist: players}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodAllowlistSet, params, &updatedAllowlist)
+	err := c.call(ctx, protocol.MethodAllowlistSet, params, &updatedAllowlist)
 	return updatedAllowlist, err
 }
 
@@ -26,7 +26,7 @@ func (c *MCRPCClient) SetAllowlist(ctx context.Context, players []Player) ([]Pla
 func (c *MCRPCClient) AddAllowlist(ctx context.Context, add []Player) ([]Player, error) {
 	var updatedAllowlist []Player
 	params := protocol.AddAllowlistParams{AllowAdd: add}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodAllowlistAdd, params, &updatedAllowlist)
+	err := c.call(ctx, protocol.MethodAllowlistAdd, params, &updatedAllowlist)
 	return updatedAllowlist, err
 }
 
@@ -34,13 +34,13 @@ func (c *MCRPCClient) AddAllowlist(ctx context.Context, add []Player) ([]Player,
 func (c *MCRPCClient) RemoveAllowlist(ctx context.Context, remove []Player) ([]Player, error) {
 	var updatedAllowlist []Player
 	params := protocol.RemoveAllowlistParams{AllowRemove: remove}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodAllowlistRemove, params, &updatedAllowlist)
+	err := c.call(ctx, protocol.MethodAllowlistRemove, params, &updatedAllowlist)
 	return updatedAllowlist, err
 }
 
 // ClearAllowlist removes all players from the allowlist.
 func (c *MCRPCClient) ClearAllowlist(ctx context.Context) ([]Player, error) {
 	var updatedAllowlist []Player
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodAllowlistClear, nil, &updatedAllowlist)
+	err := c.call(ctx, protocol.MethodAllowlistClear, nil, &updatedAllowlist)
 	return updatedAllowlist, err
 }

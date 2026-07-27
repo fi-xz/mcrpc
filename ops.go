@@ -10,7 +10,7 @@ import (
 // GetOperators retrieves the current list of operators.
 func (c *MCRPCClient) GetOperators(ctx context.Context) ([]Operator, error) {
 	var operators []Operator
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodOperatorsGet, nil, &operators)
+	err := c.call(ctx, protocol.MethodOperatorsGet, nil, &operators)
 	return operators, err
 }
 
@@ -18,7 +18,7 @@ func (c *MCRPCClient) GetOperators(ctx context.Context) ([]Operator, error) {
 func (c *MCRPCClient) SetOperators(ctx context.Context, operators []Operator) ([]Operator, error) {
 	var updatedOperators []Operator
 	params := protocol.SetOperatorParams{Operators: operators}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodOperatorsSet, params, &updatedOperators)
+	err := c.call(ctx, protocol.MethodOperatorsSet, params, &updatedOperators)
 	return updatedOperators, err
 }
 
@@ -26,7 +26,7 @@ func (c *MCRPCClient) SetOperators(ctx context.Context, operators []Operator) ([
 func (c *MCRPCClient) AddOperators(ctx context.Context, add []Operator) ([]Operator, error) {
 	var updatedOperators []Operator
 	params := protocol.AddOperatorParams{OperatorAdd: add}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodOperatorsAdd, params, &updatedOperators)
+	err := c.call(ctx, protocol.MethodOperatorsAdd, params, &updatedOperators)
 	return updatedOperators, err
 }
 
@@ -34,13 +34,13 @@ func (c *MCRPCClient) AddOperators(ctx context.Context, add []Operator) ([]Opera
 func (c *MCRPCClient) RemoveOperators(ctx context.Context, remove []Player) ([]Operator, error) {
 	var updatedOperators []Operator
 	params := protocol.RemoveOperatorParams{OperatorRemove: remove}
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodOperatorsRemove, params, &updatedOperators)
+	err := c.call(ctx, protocol.MethodOperatorsRemove, params, &updatedOperators)
 	return updatedOperators, err
 }
 
 // ClearOperators removes all players from the operator list.
 func (c *MCRPCClient) ClearOperators(ctx context.Context) ([]Operator, error) {
 	var updatedOperators []Operator
-	err := c.JSONRPCConn.Call(ctx, protocol.MethodOperatorsClear, nil, &updatedOperators)
+	err := c.call(ctx, protocol.MethodOperatorsClear, nil, &updatedOperators)
 	return updatedOperators, err
 }
