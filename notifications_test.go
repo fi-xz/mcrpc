@@ -120,7 +120,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got ServerState
 		client.handler.OnServerStatus = func(s ServerState) { got = s }
 		state := ServerState{Started: true, Version: Version{Name: "1.21.4", Protocol: 769}}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStatus, state))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStatus, []any{state}))
 		if !got.Started || got.Version.Name != "1.21.4" {
 			t.Errorf("OnServerStatus got unexpected value: %+v", got)
 		}
@@ -141,7 +141,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got Player
 		client.handler.OnPlayerJoined = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationPlayerJoined, player))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationPlayerJoined, []any{player}))
 		if got.Name != player.Name || got.UUID != player.UUID {
 			t.Errorf("OnPlayerJoined got %+v, want %+v", got, player)
 		}
@@ -152,7 +152,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got Player
 		client.handler.OnPlayerLeft = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationPlayerLeft, player))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationPlayerLeft, []any{player}))
 		if got.Name != player.Name {
 			t.Errorf("OnPlayerLeft got %+v, want %+v", got, player)
 		}
@@ -163,7 +163,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got Operator
 		client.handler.OnOperatorAdded = func(op Operator) { got = op }
 		op := Operator{Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}, PermissionLevel: 4}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationOperatorAdded, op))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationOperatorAdded, []any{op}))
 		if got.Player.Name != op.Player.Name || got.PermissionLevel != op.PermissionLevel {
 			t.Errorf("OnOperatorAdded got %+v, want %+v", got, op)
 		}
@@ -174,7 +174,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got Operator
 		client.handler.OnOperatorRemoved = func(op Operator) { got = op }
 		op := Operator{Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}, PermissionLevel: 4}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationOperatorRemoved, op))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationOperatorRemoved, []any{op}))
 		if got.Player.Name != op.Player.Name {
 			t.Errorf("OnOperatorRemoved got %+v, want %+v", got, op)
 		}
@@ -185,7 +185,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got Player
 		client.handler.OnAllowlistAdded = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationAllowlistAdded, player))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationAllowlistAdded, []any{player}))
 		if got.Name != player.Name {
 			t.Errorf("OnAllowlistAdded got %+v, want %+v", got, player)
 		}
@@ -196,7 +196,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got Player
 		client.handler.OnAllowlistRemoved = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationAllowlistRemoved, player))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationAllowlistRemoved, []any{player}))
 		if got.Name != player.Name {
 			t.Errorf("OnAllowlistRemoved got %+v, want %+v", got, player)
 		}
@@ -207,7 +207,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got UserBan
 		client.handler.OnBanAdded = func(b UserBan) { got = b }
 		ban := UserBan{Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}, Reason: "test", Source: "Test"}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationBanAdded, ban))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationBanAdded, []any{ban}))
 		if got.Player.Name != ban.Player.Name || got.Reason != ban.Reason {
 			t.Errorf("OnBanAdded got %+v, want %+v", got, ban)
 		}
@@ -218,7 +218,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got Player
 		client.handler.OnBanRemoved = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationBanRemoved, player))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationBanRemoved, []any{player}))
 		if got.Name != player.Name {
 			t.Errorf("OnBanRemoved got %+v, want %+v", got, player)
 		}
@@ -229,7 +229,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got IPBan
 		client.handler.OnIPBanAdded = func(b IPBan) { got = b }
 		ban := IPBan{IP: "192.168.1.100", Reason: "test", Source: "Test"}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationIPBanAdded, ban))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationIPBanAdded, []any{ban}))
 		if got.IP != ban.IP || got.Reason != ban.Reason {
 			t.Errorf("OnIPBanAdded got %+v, want %+v", got, ban)
 		}
@@ -239,7 +239,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		client := &Client{}
 		var got string
 		client.handler.OnIPBanRemoved = func(ip string) { got = ip }
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationIPBanRemoved, "192.168.1.100"))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationIPBanRemoved, []any{"192.168.1.100"}))
 		if got != "192.168.1.100" {
 			t.Errorf("OnIPBanRemoved got %q, want %q", got, "192.168.1.100")
 		}
@@ -250,7 +250,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		var got TypedGameRule
 		client.handler.OnGameruleUpdated = func(g TypedGameRule) { got = g }
 		rule := TypedGameRule{UntypedGameRule: UntypedGameRule{Key: "minecraft:keep_inventory", Value: true}, Type: "boolean"}
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationGameruleUpdated, rule))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationGameruleUpdated, []any{rule}))
 		if got.Key != rule.Key || got.Type != rule.Type {
 			t.Errorf("OnGameruleUpdated got %+v, want %+v", got, rule)
 		}
@@ -270,7 +270,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		client := &Client{}
 		var got float64
 		client.handler.OnWorldUpgradeProgress = func(p float64) { got = p }
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeProgress, 0.42))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeProgress, []any{0.42}))
 		if got != 0.42 {
 			t.Errorf("OnWorldUpgradeProgress got %v, want 0.42", got)
 		}
@@ -290,7 +290,7 @@ func TestHandleIncomingDispatch(t *testing.T) {
 		client := &Client{}
 		var got string
 		client.handler.OnWorldUpgradeFailed = func(r string) { got = r }
-		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeFailed, "disk full"))
+		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeFailed, []any{"disk full"}))
 		if got != "disk full" {
 			t.Errorf("OnWorldUpgradeFailed got %q, want %q", got, "disk full")
 		}

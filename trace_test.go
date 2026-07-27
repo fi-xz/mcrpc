@@ -114,7 +114,7 @@ func TestTraceCapturesNotifications(t *testing.T) {
 	t.Cleanup(func() { _ = client.Close() })
 
 	conn := server.nextConn(t)
-	if err := conn.Notify(context.Background(), "minecraft:notification/players/joined", PlayerByName("fi_xz")); err != nil {
+	if err := conn.Notify(context.Background(), "minecraft:notification/players/joined", []any{PlayerByName("fi_xz")}); err != nil {
 		t.Fatalf("server failed to notify: %v", err)
 	}
 

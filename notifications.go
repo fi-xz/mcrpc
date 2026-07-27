@@ -4,6 +4,7 @@ package mcrpc
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/fi-xz/mcrpc/internal/protocol"
 	"github.com/sourcegraph/jsonrpc2"
@@ -15,9 +16,34 @@ func (f handlerFunc) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonr
 	f(ctx, conn, req)
 }
 
-// decodeNotification decodes a notification's payload into target.
-func decodeNotification[T any](c *Client, method string, params json.RawMessage, target *T) bool {
-	if err := json.Unmarshal(params, target); err != nil {
+// errNoParams reports a notification that should have carried a payload but
+// arrived with an empty argument list.
+var errNoParams = errors.New("notification carried no parameters")
+
+// decodeParam decodes a notification's payload into target.
+//
+// JSON-RPC params are a *positional argument list*, and every notification the
+// server advertises through rpc.discover declares exactly one parameter. The
+// payload is therefore element 0 of an array:
+//
+//	minecraft:notification/players/joined  ->  [{"name":"fi_xz","id":"…"}]
+//
+// not the bare object. Decoding the params directly into the payload type
+// fails, which is how every payload-carrying handler in this package came to be
+// silently dead.
+func decodeParam[T any](c *Client, method string, params json.RawMessage, target *T) bool {
+	var positional []json.RawMessage
+	if err := json.Unmarshal(params, &positional); err != nil {
+		c.reportDecodeError(method, err)
+		return false
+	}
+
+	if len(positional) == 0 {
+		c.reportDecodeError(method, errNoParams)
+		return false
+	}
+
+	if err := json.Unmarshal(positional[0], target); err != nil {
 		c.reportDecodeError(method, err)
 		return false
 	}
@@ -77,7 +103,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationServerStatus:
 			if c.handler.OnServerStatus != nil {
 				var status ServerState
-				if decodeNotification(c, req.Method, params, &status) {
+				if decodeParam(c, req.Method, params, &status) {
 					c.handler.OnServerStatus(status)
 				}
 			}
@@ -91,7 +117,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationPlayerJoined:
 			if c.handler.OnPlayerJoined != nil {
 				var player Player
-				if decodeNotification(c, req.Method, params, &player) {
+				if decodeParam(c, req.Method, params, &player) {
 					c.handler.OnPlayerJoined(player)
 				}
 			}
@@ -99,7 +125,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationPlayerLeft:
 			if c.handler.OnPlayerLeft != nil {
 				var player Player
-				if decodeNotification(c, req.Method, params, &player) {
+				if decodeParam(c, req.Method, params, &player) {
 					c.handler.OnPlayerLeft(player)
 				}
 			}
@@ -108,7 +134,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationOperatorAdded:
 			if c.handler.OnOperatorAdded != nil {
 				var operator Operator
-				if decodeNotification(c, req.Method, params, &operator) {
+				if decodeParam(c, req.Method, params, &operator) {
 					c.handler.OnOperatorAdded(operator)
 				}
 			}
@@ -116,7 +142,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationOperatorRemoved:
 			if c.handler.OnOperatorRemoved != nil {
 				var operator Operator
-				if decodeNotification(c, req.Method, params, &operator) {
+				if decodeParam(c, req.Method, params, &operator) {
 					c.handler.OnOperatorRemoved(operator)
 				}
 			}
@@ -125,7 +151,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationAllowlistAdded:
 			if c.handler.OnAllowlistAdded != nil {
 				var player Player
-				if decodeNotification(c, req.Method, params, &player) {
+				if decodeParam(c, req.Method, params, &player) {
 					c.handler.OnAllowlistAdded(player)
 				}
 			}
@@ -133,7 +159,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationAllowlistRemoved:
 			if c.handler.OnAllowlistRemoved != nil {
 				var player Player
-				if decodeNotification(c, req.Method, params, &player) {
+				if decodeParam(c, req.Method, params, &player) {
 					c.handler.OnAllowlistRemoved(player)
 				}
 			}
@@ -142,7 +168,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationBanAdded:
 			if c.handler.OnBanAdded != nil {
 				var ban UserBan
-				if decodeNotification(c, req.Method, params, &ban) {
+				if decodeParam(c, req.Method, params, &ban) {
 					c.handler.OnBanAdded(ban)
 				}
 			}
@@ -150,7 +176,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationBanRemoved:
 			if c.handler.OnBanRemoved != nil {
 				var player Player
-				if decodeNotification(c, req.Method, params, &player) {
+				if decodeParam(c, req.Method, params, &player) {
 					c.handler.OnBanRemoved(player)
 				}
 			}
@@ -159,7 +185,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationIPBanAdded:
 			if c.handler.OnIPBanAdded != nil {
 				var ban IPBan
-				if decodeNotification(c, req.Method, params, &ban) {
+				if decodeParam(c, req.Method, params, &ban) {
 					c.handler.OnIPBanAdded(ban)
 				}
 			}
@@ -167,7 +193,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationIPBanRemoved:
 			if c.handler.OnIPBanRemoved != nil {
 				var ip string
-				if decodeNotification(c, req.Method, params, &ip) {
+				if decodeParam(c, req.Method, params, &ip) {
 					c.handler.OnIPBanRemoved(ip)
 				}
 			}
@@ -176,7 +202,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationGameruleUpdated:
 			if c.handler.OnGameruleUpdated != nil {
 				var gamerule TypedGameRule
-				if decodeNotification(c, req.Method, params, &gamerule) {
+				if decodeParam(c, req.Method, params, &gamerule) {
 					c.handler.OnGameruleUpdated(gamerule)
 				}
 			}
@@ -190,7 +216,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationWorldUpgradeProgress:
 			if c.handler.OnWorldUpgradeProgress != nil {
 				var progress float64
-				if decodeNotification(c, req.Method, params, &progress) {
+				if decodeParam(c, req.Method, params, &progress) {
 					c.handler.OnWorldUpgradeProgress(progress)
 				}
 			}
@@ -203,7 +229,7 @@ func (c *Client) handleIncoming() jsonrpc2.Handler {
 		case protocol.NotificationWorldUpgradeFailed:
 			if c.handler.OnWorldUpgradeFailed != nil {
 				var reason string
-				if decodeNotification(c, req.Method, params, &reason) {
+				if decodeParam(c, req.Method, params, &reason) {
 					c.handler.OnWorldUpgradeFailed(reason)
 				}
 			}
