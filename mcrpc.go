@@ -70,15 +70,15 @@ type MCRPCClient struct {
 
 // Create establishes a WebSocket connection to the Minecraft server without TLS.
 // The secret is used for authentication with the server.
-func Create(context context.Context, host string, port int, secret string) (*MCRPCClient, error) {
-	return createMCRCPClient(context, host, port, secret, nil, false)
+func Create(ctx context.Context, host string, port int, secret string) (*MCRPCClient, error) {
+	return createClient(ctx, host, port, secret, nil, false)
 }
 
 // CreateWithTLS establishes a WebSocket connection to the Minecraft server with TLS.
 // The cert parameter is used for client certificate authentication.
 // If insecure is true, the server's certificate will not be verified.
-func CreateWithTLS(context context.Context, host string, port int, secret string, cert *tls.Certificate, insecure bool) (*MCRPCClient, error) {
-	return createMCRCPClient(context, host, port, secret, cert, insecure)
+func CreateWithTLS(ctx context.Context, host string, port int, secret string, cert *tls.Certificate, insecure bool) (*MCRPCClient, error) {
+	return createClient(ctx, host, port, secret, cert, insecure)
 }
 
 // DisconnectNotify returns a channel that is closed when the connection is closed.
@@ -100,7 +100,7 @@ func (c *MCRPCClient) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
 }
 
-func createMCRCPClient(ctx context.Context, host string, port int, secret string, cert *tls.Certificate, insecure bool) (*MCRPCClient, error) {
+func createClient(ctx context.Context, host string, port int, secret string, cert *tls.Certificate, insecure bool) (*MCRPCClient, error) {
 	header := http.Header{}
 
 	// Determine WebSocket protocol based on TLS usage
