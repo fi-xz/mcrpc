@@ -9,7 +9,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"strconv"
 	"sync/atomic"
 
 	"github.com/gorilla/websocket"
@@ -68,17 +70,18 @@ type MCRPCClient struct {
 	OnWorldUpgradeFailed   func(reason string)
 }
 
-// Create establishes a WebSocket connection to the Minecraft server without TLS.
+// Create establishes a plaintext WebSocket connection to the Minecraft server.
 // The secret is used for authentication with the server.
 func Create(ctx context.Context, host string, port int, secret string) (*MCRPCClient, error) {
-	return createClient(ctx, host, port, secret, nil, false)
+	return createClient(ctx, host, port, secret, nil, false, false)
 }
 
-// CreateWithTLS establishes a WebSocket connection to the Minecraft server with TLS.
-// The cert parameter is used for client certificate authentication.
+// CreateWithTLS establishes a TLS WebSocket (wss) connection to the Minecraft
+// server. TLS is always used, whether or not a client certificate is supplied;
+// cert may be nil for servers that do not require client authentication.
 // If insecure is true, the server's certificate will not be verified.
 func CreateWithTLS(ctx context.Context, host string, port int, secret string, cert *tls.Certificate, insecure bool) (*MCRPCClient, error) {
-	return createClient(ctx, host, port, secret, cert, insecure)
+	return createClient(ctx, host, port, secret, cert, insecure, true)
 }
 
 // DisconnectNotify returns a channel that is closed when the connection is closed.
@@ -100,36 +103,40 @@ func (c *MCRPCClient) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
 }
 
-func createClient(ctx context.Context, host string, port int, secret string, cert *tls.Certificate, insecure bool) (*MCRPCClient, error) {
+func createClient(ctx context.Context, host string, port int, secret string, cert *tls.Certificate, insecure, useTLS bool) (*MCRPCClient, error) {
 	header := http.Header{}
 
-	// Determine WebSocket protocol based on TLS usage
-	protocol := "ws"
-	if cert != nil {
-		protocol = "wss"
+	// The scheme follows the caller's stated intent, not the presence of a
+	// client certificate: a TLS server may well not require one.
+	scheme := "ws"
+	if useTLS {
+		scheme = "wss"
 	}
-	dialString := fmt.Sprintf("%s://%s:%d", protocol, host, port)
+	dialString := fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(host, strconv.Itoa(port)))
 
 	header.Add("Authorization", "Bearer "+secret)
 	header.Add("Sec-WebSocket-Protocol", "minecraft-v1,"+secret)
 
 	dialer := websocket.Dialer{}
 
-	if cert != nil {
+	if useTLS {
 		dialer.TLSClientConfig = &tls.Config{
-			Certificates:       []tls.Certificate{*cert},
 			InsecureSkipVerify: insecure,
+		}
+		if cert != nil {
+			dialer.TLSClientConfig.Certificates = []tls.Certificate{*cert}
 		}
 	}
 
 	conn, response, err := dialer.Dial(dialString, header)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("mcrpc: dial %s: %w", dialString, err)
 	}
 
 	if response.StatusCode != http.StatusSwitchingProtocols {
-		return nil, err
+		conn.Close()
+		return nil, fmt.Errorf("mcrpc: handshake failed: unexpected status %s", response.Status)
 	}
 
 	objectStream := rpcws.NewObjectStream(conn)
