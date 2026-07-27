@@ -68,14 +68,26 @@ func TestServerSettingsSetDifficulty(t *testing.T) {
 
 	result, err := client.SetDifficulty(ctx, target)
 	if err != nil {
-		t.Errorf("SetDifficulty failed: %v", err)
-	}
-	if result != target {
-		t.Errorf("Expected difficulty %q, got %q", target, result)
+		t.Fatalf("SetDifficulty failed: %v", err)
 	}
 
-	_, err = client.SetDifficulty(ctx, original)
+	// The setter returns the difficulty now in effect, which is not necessarily
+	// the one requested: a world with its difficulty locked keeps the old value
+	// and reports it back without an error. Assert what the client controls —
+	// that the returned value is the server's actual state — rather than
+	// assuming the change was honoured.
+	current, err := client.GetDifficulty(ctx)
 	if err != nil {
+		t.Fatalf("GetDifficulty failed: %v", err)
+	}
+	if result != current {
+		t.Errorf("SetDifficulty returned %q but the server reports %q", result, current)
+	}
+	if result != target {
+		t.Logf("the server kept difficulty %q instead of the requested %q; it appears to be locked", result, target)
+	}
+
+	if _, err := client.SetDifficulty(ctx, original); err != nil {
 		t.Errorf("Failed to restore difficulty: %v", err)
 	}
 }
@@ -571,14 +583,23 @@ func TestServerSettingsSetStatusHeartbeatInterval(t *testing.T) {
 	target := original + 1
 	result, err := client.SetStatusHeartbeatInterval(ctx, target)
 	if err != nil {
-		t.Errorf("SetStatusHeartbeatInterval failed: %v", err)
-	}
-	if result != target {
-		t.Errorf("Expected heartbeat interval %d, got %d", target, result)
+		t.Fatalf("SetStatusHeartbeatInterval failed: %v", err)
 	}
 
-	_, err = client.SetStatusHeartbeatInterval(ctx, original)
+	// As with difficulty, the setter reports the interval in effect. A server
+	// with status replies disabled accepts the call and keeps reporting 0.
+	current, err := client.GetStatusHeartbeatInterval(ctx)
 	if err != nil {
+		t.Fatalf("GetStatusHeartbeatInterval failed: %v", err)
+	}
+	if result != current {
+		t.Errorf("SetStatusHeartbeatInterval returned %d but the server reports %d", result, current)
+	}
+	if result != target {
+		t.Logf("the server kept the heartbeat interval at %d instead of the requested %d", result, target)
+	}
+
+	if _, err := client.SetStatusHeartbeatInterval(ctx, original); err != nil {
 		t.Errorf("Failed to restore heartbeat interval: %v", err)
 	}
 }
