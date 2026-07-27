@@ -32,6 +32,7 @@ type Client struct {
 	secret           string
 	handshakeTimeout time.Duration
 	handler          Handler
+	trace            func(TraceMessage)
 
 	useTLS             bool
 	tlsConfig          *tls.Config
@@ -111,7 +112,7 @@ func (c *Client) Start(ctx context.Context) error {
 	}
 
 	sessionCtx, cancel := context.WithCancel(ctx)
-	rpc := jsonrpc2.NewConn(sessionCtx, rpcws.NewObjectStream(conn), c.handleIncoming())
+	rpc := jsonrpc2.NewConn(sessionCtx, rpcws.NewObjectStream(conn), c.handleIncoming(), c.traceOptions()...)
 
 	c.rpc = rpc
 	c.cancel = cancel
