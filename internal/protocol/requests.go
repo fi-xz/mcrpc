@@ -117,7 +117,11 @@ type SetPlayerIdleTimeoutParams struct {
 
 // SetAllowFlightParams contains parameters for allowing flight in Survival mode.
 type SetAllowFlightParams struct {
-	Allowed bool `json:"allowed"`
+	// A 26.2 server rejects "allowed" with Invalid params and accepts only
+	// "allow". Whether older servers in the supported range (1.21.9+) want the
+	// other spelling is still being checked; game rule keys changed the same
+	// way in 1.21.11, so a version split here would not be surprising.
+	Allowed bool `json:"allow"`
 }
 
 // SetMOTDParams contains parameters for setting the server message of the day.
