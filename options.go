@@ -14,10 +14,16 @@ type Option func(*Client)
 // with default settings, which is what a server that presents a certificate but
 // does not require client authentication needs.
 //
-// cfg is cloned, so later changes to your copy do not affect the client.
+// cfg is cloned when the option is applied, so later changes to your copy do
+// not affect the client. That matters beyond tidiness: without it a config
+// shared with something else could turn InsecureSkipVerify on after the client
+// was built, and every dial from then on — including reconnects — would follow.
 func WithTLS(cfg *tls.Config) Option {
 	return func(c *Client) {
 		c.useTLS = true
+		if cfg != nil {
+			cfg = cfg.Clone()
+		}
 		c.tlsConfig = cfg
 	}
 }
