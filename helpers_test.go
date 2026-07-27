@@ -134,3 +134,121 @@ func TestGameRuleAccessors(t *testing.T) {
 		}
 	})
 }
+
+func TestPlayerConstructors(t *testing.T) {
+	if got := PlayerByName("fi_xz"); got.Name != "fi_xz" || got.UUID != "" {
+		t.Errorf("PlayerByName = %+v", got)
+	}
+
+	const uuid = "a0d8c884-2a79-4c95-8617-a51d27a427ec"
+	if got := PlayerByUUID(uuid); got.UUID != uuid || got.Name != "" {
+		t.Errorf("PlayerByUUID = %+v", got)
+	}
+}
+
+// TestGameRuleValueRepresentations covers the split between servers: values are
+// strings before management API 3.0.0 and native JSON types from 3.0.0 on. Both
+// must read, and an update must go back in the representation it came in.
+func TestGameRuleValueRepresentations(t *testing.T) {
+	stringly := TypedGameRule{
+		UntypedGameRule: UntypedGameRule{Key: "keepInventory", Value: "true"},
+		Type:            "boolean",
+	}
+	native := TypedGameRule{
+		UntypedGameRule: UntypedGameRule{Key: "minecraft:keep_inventory", Value: true},
+		Type:            "boolean",
+	}
+
+	if !stringly.UsesStringValues() {
+		t.Error("a string value should report UsesStringValues")
+	}
+	if native.UsesStringValues() {
+		t.Error("a native value should not report UsesStringValues")
+	}
+
+	if got := stringly.WithBool(false); got.Value != "false" {
+		t.Errorf("WithBool on a string rule = %#v, want \"false\"", got.Value)
+	}
+	if got := native.WithBool(false); got.Value != false {
+		t.Errorf("WithBool on a native rule = %#v, want false", got.Value)
+	}
+
+	counted := TypedGameRule{
+		UntypedGameRule: UntypedGameRule{Key: "randomTickSpeed", Value: "3"},
+		Type:            "integer",
+	}
+	if got := counted.WithInt(5); got.Value != "5" {
+		t.Errorf("WithInt on a string rule = %#v, want \"5\"", got.Value)
+	}
+	if got := (UntypedGameRule{Key: "k", Value: 3}).WithInt(5); got.Value != 5 {
+		t.Errorf("WithInt on a native rule = %#v, want 5", got.Value)
+	}
+	if got := counted.WithString("7"); got.Value != "7" {
+		t.Errorf("WithString = %#v, want \"7\"", got.Value)
+	}
+}
+
+func TestGameRuleAccessorsAcceptEveryRepresentation(t *testing.T) {
+	bools := []struct {
+		value any
+		want  bool
+		ok    bool
+	}{
+		{true, true, true},
+		{"true", true, true},
+		{"false", false, true},
+		{"maybe", false, false},
+		{3, false, false},
+	}
+	for _, test := range bools {
+		got, ok := UntypedGameRule{Value: test.value}.Bool()
+		if got != test.want || ok != test.ok {
+			t.Errorf("Bool(%#v) = (%v, %v), want (%v, %v)", test.value, got, ok, test.want, test.ok)
+		}
+	}
+
+	ints := []struct {
+		value any
+		want  int
+		ok    bool
+	}{
+		{3, 3, true},
+		{int64(3), 3, true},
+		{float64(3), 3, true},
+		{"3", 3, true},
+		{json.Number("3"), 3, true},
+		{"three", 0, false},
+		{1.5, 0, false},
+		{true, 0, false},
+	}
+	for _, test := range ints {
+		got, ok := UntypedGameRule{Value: test.value}.Int()
+		if got != test.want || ok != test.ok {
+			t.Errorf("Int(%#v) = (%v, %v), want (%v, %v)", test.value, got, ok, test.want, test.ok)
+		}
+	}
+
+	if _, ok := (UntypedGameRule{Value: 3}).StringValue(); ok {
+		t.Error("StringValue should reject a non-string value")
+	}
+}
+
+func TestExpiresAtRejectsAnUnparseableTimestamp(t *testing.T) {
+	ban := UserBan{Expires: "not a timestamp"}
+
+	if _, ok := ban.ExpiresAt(); ok {
+		t.Error("an unparseable expiry should not be reported as a deadline")
+	}
+	if ban.IsPermanent() {
+		t.Error("a ban with a malformed expiry is not permanent, just unreadable")
+	}
+}
+
+func TestNonNilSlicePassesAPopulatedSliceThrough(t *testing.T) {
+	players := []Player{PlayerByName("fi_xz")}
+
+	got := nonNilSlice(players)
+	if len(got) != 1 || got[0].Name != "fi_xz" {
+		t.Errorf("nonNilSlice altered a populated slice: %+v", got)
+	}
+}
