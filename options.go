@@ -54,6 +54,22 @@ func WithHandshakeTimeout(d time.Duration) Option {
 	}
 }
 
+// WithTrace reports every JSON-RPC message the client sends and receives,
+// with params and results exactly as they were serialised.
+//
+// This is a diagnostic aid for confirming what the client puts on the wire and
+// what the server sends back — struct tags, omitted fields, and the JSON types
+// of untyped values. It is called from the connection's read and write paths,
+// so it must not block or call back into the client.
+//
+// Params may contain the server secret if a future method carries one; treat
+// trace output as sensitive.
+func WithTrace(trace func(TraceMessage)) Option {
+	return func(c *Client) {
+		c.trace = trace
+	}
+}
+
 // WithHandler registers the callbacks invoked for server notifications. The
 // handler is copied, so it must be complete at construction time; see Handler
 // for why.
