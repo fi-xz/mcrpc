@@ -30,9 +30,7 @@ func TestConnectionDiagnostics(t *testing.T) {
 		client, ctx := createTestClient(t)
 
 		t.Logf("✓ Successfully connected to server")
-		t.Logf("  - WebSocket connected: %v", client.WebsocketConn != nil)
-		t.Logf("  - JSON-RPC connected: %v", client.JSONRPCConn != nil)
-		t.Logf("  - Client closed: %v", client.IsClosed())
+		t.Logf("  - Session running: %v", client.IsRunning())
 
 		// Try to get server status
 		status, err := client.GetServerStatus(ctx)

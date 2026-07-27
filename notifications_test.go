@@ -27,14 +27,14 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("NilHandlerNoParam_NoPanic", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStarted, nil))
 	})
 
 	t.Run("NonNotificationIgnored", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnServerStarted = func() { called = true }
+		client.handler.OnServerStarted = func() { called = true }
 		req := &jsonrpc2.Request{Method: protocol.NotificationServerStarted, Notif: false}
 		client.handleIncoming().Handle(ctx, nil, req)
 		if called {
@@ -43,9 +43,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("UnknownMethodNoPanic", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnNotification = func(_ string, _ json.RawMessage) { called = true }
+		client.handler.OnNotification = func(_ string, _ json.RawMessage) { called = true }
 		client.handleIncoming().Handle(ctx, nil, makeNotif("minecraft:unknown/method", nil))
 		if !called {
 			t.Error("OnNotification not called for unknown method")
@@ -53,10 +53,10 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("GenericCalledBeforeSpecific", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var order []string
-		client.OnNotification = func(_ string, _ json.RawMessage) { order = append(order, "generic") }
-		client.OnServerStarted = func() { order = append(order, "specific") }
+		client.handler.OnNotification = func(_ string, _ json.RawMessage) { order = append(order, "generic") }
+		client.handler.OnServerStarted = func() { order = append(order, "specific") }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStarted, nil))
 		if len(order) != 2 || order[0] != "generic" || order[1] != "specific" {
 			t.Errorf("unexpected call order: %v", order)
@@ -64,9 +64,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("InvalidParamsDoesNotCallTypedHandler", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnPlayerJoined = func(_ Player) { called = true }
+		client.handler.OnPlayerJoined = func(_ Player) { called = true }
 		rawMsg := json.RawMessage(`{invalid}`)
 		req := &jsonrpc2.Request{Method: protocol.NotificationPlayerJoined, Params: &rawMsg, Notif: true}
 		client.handleIncoming().Handle(ctx, nil, req)
@@ -76,9 +76,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("ServerStarted", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnServerStarted = func() { called = true }
+		client.handler.OnServerStarted = func() { called = true }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStarted, nil))
 		if !called {
 			t.Error("OnServerStarted not dispatched")
@@ -86,9 +86,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("ServerStopping", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnServerStopping = func() { called = true }
+		client.handler.OnServerStopping = func() { called = true }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStopping, nil))
 		if !called {
 			t.Error("OnServerStopping not dispatched")
@@ -96,9 +96,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("ServerSaving", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnServerSaving = func() { called = true }
+		client.handler.OnServerSaving = func() { called = true }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerSaving, nil))
 		if !called {
 			t.Error("OnServerSaving not dispatched")
@@ -106,9 +106,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("ServerSaved", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnServerSaved = func() { called = true }
+		client.handler.OnServerSaved = func() { called = true }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerSaved, nil))
 		if !called {
 			t.Error("OnServerSaved not dispatched")
@@ -116,9 +116,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("ServerStatus", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got ServerState
-		client.OnServerStatus = func(s ServerState) { got = s }
+		client.handler.OnServerStatus = func(s ServerState) { got = s }
 		state := ServerState{Started: true, Version: Version{Name: "1.21.4", Protocol: 769}}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerStatus, state))
 		if !got.Started || got.Version.Name != "1.21.4" {
@@ -127,9 +127,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("ServerActivity", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnServerActivity = func() { called = true }
+		client.handler.OnServerActivity = func() { called = true }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationServerActivity, nil))
 		if !called {
 			t.Error("OnServerActivity not dispatched")
@@ -137,9 +137,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("PlayerJoined", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got Player
-		client.OnPlayerJoined = func(p Player) { got = p }
+		client.handler.OnPlayerJoined = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationPlayerJoined, player))
 		if got.Name != player.Name || got.UUID != player.UUID {
@@ -148,9 +148,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("PlayerLeft", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got Player
-		client.OnPlayerLeft = func(p Player) { got = p }
+		client.handler.OnPlayerLeft = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationPlayerLeft, player))
 		if got.Name != player.Name {
@@ -159,9 +159,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("OperatorAdded", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got Operator
-		client.OnOperatorAdded = func(op Operator) { got = op }
+		client.handler.OnOperatorAdded = func(op Operator) { got = op }
 		op := Operator{Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}, PermissionLevel: 4}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationOperatorAdded, op))
 		if got.Player.Name != op.Player.Name || got.PermissionLevel != op.PermissionLevel {
@@ -170,9 +170,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("OperatorRemoved", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got Operator
-		client.OnOperatorRemoved = func(op Operator) { got = op }
+		client.handler.OnOperatorRemoved = func(op Operator) { got = op }
 		op := Operator{Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}, PermissionLevel: 4}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationOperatorRemoved, op))
 		if got.Player.Name != op.Player.Name {
@@ -181,9 +181,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("AllowlistAdded", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got Player
-		client.OnAllowlistAdded = func(p Player) { got = p }
+		client.handler.OnAllowlistAdded = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationAllowlistAdded, player))
 		if got.Name != player.Name {
@@ -192,9 +192,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("AllowlistRemoved", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got Player
-		client.OnAllowlistRemoved = func(p Player) { got = p }
+		client.handler.OnAllowlistRemoved = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationAllowlistRemoved, player))
 		if got.Name != player.Name {
@@ -203,9 +203,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("BanAdded", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got UserBan
-		client.OnBanAdded = func(b UserBan) { got = b }
+		client.handler.OnBanAdded = func(b UserBan) { got = b }
 		ban := UserBan{Player: Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}, Reason: "test", Source: "Test"}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationBanAdded, ban))
 		if got.Player.Name != ban.Player.Name || got.Reason != ban.Reason {
@@ -214,9 +214,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("BanRemoved", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got Player
-		client.OnBanRemoved = func(p Player) { got = p }
+		client.handler.OnBanRemoved = func(p Player) { got = p }
 		player := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationBanRemoved, player))
 		if got.Name != player.Name {
@@ -225,9 +225,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("IPBanAdded", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got IPBan
-		client.OnIPBanAdded = func(b IPBan) { got = b }
+		client.handler.OnIPBanAdded = func(b IPBan) { got = b }
 		ban := IPBan{IP: "192.168.1.100", Reason: "test", Source: "Test"}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationIPBanAdded, ban))
 		if got.IP != ban.IP || got.Reason != ban.Reason {
@@ -236,9 +236,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("IPBanRemoved", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got string
-		client.OnIPBanRemoved = func(ip string) { got = ip }
+		client.handler.OnIPBanRemoved = func(ip string) { got = ip }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationIPBanRemoved, "192.168.1.100"))
 		if got != "192.168.1.100" {
 			t.Errorf("OnIPBanRemoved got %q, want %q", got, "192.168.1.100")
@@ -246,10 +246,10 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("GameruleUpdated", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got TypedGameRule
-		client.OnGameruleUpdated = func(g TypedGameRule) { got = g }
-		rule := TypedGameRule{UntypedGameRule: UntypedGameRule{Key: "keepInventory", Value: true}, Type: "boolean"}
+		client.handler.OnGameruleUpdated = func(g TypedGameRule) { got = g }
+		rule := TypedGameRule{UntypedGameRule: UntypedGameRule{Key: "minecraft:keep_inventory", Value: true}, Type: "boolean"}
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationGameruleUpdated, rule))
 		if got.Key != rule.Key || got.Type != rule.Type {
 			t.Errorf("OnGameruleUpdated got %+v, want %+v", got, rule)
@@ -257,9 +257,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("WorldUpgradeStarted", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnWorldUpgradeStarted = func() { called = true }
+		client.handler.OnWorldUpgradeStarted = func() { called = true }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeStarted, nil))
 		if !called {
 			t.Error("OnWorldUpgradeStarted not dispatched")
@@ -267,9 +267,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("WorldUpgradeProgress", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got float64
-		client.OnWorldUpgradeProgress = func(p float64) { got = p }
+		client.handler.OnWorldUpgradeProgress = func(p float64) { got = p }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeProgress, 0.42))
 		if got != 0.42 {
 			t.Errorf("OnWorldUpgradeProgress got %v, want 0.42", got)
@@ -277,9 +277,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("WorldUpgradeFinished", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		called := false
-		client.OnWorldUpgradeFinished = func() { called = true }
+		client.handler.OnWorldUpgradeFinished = func() { called = true }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeFinished, nil))
 		if !called {
 			t.Error("OnWorldUpgradeFinished not dispatched")
@@ -287,9 +287,9 @@ func TestHandleIncomingDispatch(t *testing.T) {
 	})
 
 	t.Run("WorldUpgradeFailed", func(t *testing.T) {
-		client := &MCRPCClient{}
+		client := &Client{}
 		var got string
-		client.OnWorldUpgradeFailed = func(r string) { got = r }
+		client.handler.OnWorldUpgradeFailed = func(r string) { got = r }
 		client.handleIncoming().Handle(ctx, nil, makeNotif(protocol.NotificationWorldUpgradeFailed, "disk full"))
 		if got != "disk full" {
 			t.Errorf("OnWorldUpgradeFailed got %q, want %q", got, "disk full")
@@ -302,24 +302,24 @@ func TestNotificationHandlersExist(t *testing.T) {
 	client, _ := createTestClient(t)
 
 	// Test that all handlers can be set
-	client.OnNotification = func(method string, params json.RawMessage) {}
-	client.OnServerStarted = func() {}
-	client.OnServerStopping = func() {}
-	client.OnServerSaving = func() {}
-	client.OnServerSaved = func() {}
-	client.OnServerStatus = func(status ServerState) {}
-	client.OnServerActivity = func() {}
-	client.OnPlayerJoined = func(player Player) {}
-	client.OnPlayerLeft = func(player Player) {}
-	client.OnOperatorAdded = func(operator Operator) {}
-	client.OnOperatorRemoved = func(operator Operator) {}
-	client.OnAllowlistAdded = func(player Player) {}
-	client.OnAllowlistRemoved = func(player Player) {}
-	client.OnBanAdded = func(ban UserBan) {}
-	client.OnBanRemoved = func(player Player) {}
-	client.OnIPBanAdded = func(ban IPBan) {}
-	client.OnIPBanRemoved = func(ip string) {}
-	client.OnGameruleUpdated = func(gamerule TypedGameRule) {}
+	client.handler.OnNotification = func(method string, params json.RawMessage) {}
+	client.handler.OnServerStarted = func() {}
+	client.handler.OnServerStopping = func() {}
+	client.handler.OnServerSaving = func() {}
+	client.handler.OnServerSaved = func() {}
+	client.handler.OnServerStatus = func(status ServerState) {}
+	client.handler.OnServerActivity = func() {}
+	client.handler.OnPlayerJoined = func(player Player) {}
+	client.handler.OnPlayerLeft = func(player Player) {}
+	client.handler.OnOperatorAdded = func(operator Operator) {}
+	client.handler.OnOperatorRemoved = func(operator Operator) {}
+	client.handler.OnAllowlistAdded = func(player Player) {}
+	client.handler.OnAllowlistRemoved = func(player Player) {}
+	client.handler.OnBanAdded = func(ban UserBan) {}
+	client.handler.OnBanRemoved = func(player Player) {}
+	client.handler.OnIPBanAdded = func(ban IPBan) {}
+	client.handler.OnIPBanRemoved = func(ip string) {}
+	client.handler.OnGameruleUpdated = func(gamerule TypedGameRule) {}
 }
 
 // TestNotificationHandlerInvocation tests that notification handlers can be invoked
@@ -329,12 +329,12 @@ func TestNotificationHandlerInvocation(t *testing.T) {
 	// Test ServerStarted
 	t.Run("ServerStarted", func(t *testing.T) {
 		called := make(chan bool, 1)
-		client.OnServerStarted = func() {
+		client.handler.OnServerStarted = func() {
 			called <- true
 		}
 
 		// Directly call the handler
-		client.OnServerStarted()
+		client.handler.OnServerStarted()
 
 		select {
 		case <-called:
@@ -347,12 +347,12 @@ func TestNotificationHandlerInvocation(t *testing.T) {
 	// Test PlayerJoined
 	t.Run("PlayerJoined", func(t *testing.T) {
 		received := make(chan Player, 1)
-		client.OnPlayerJoined = func(player Player) {
+		client.handler.OnPlayerJoined = func(player Player) {
 			received <- player
 		}
 
 		testPlayer := Player{Name: "fi_xz", UUID: "a0d8c884-2a79-4c95-8617-a51d27a427ec"}
-		client.OnPlayerJoined(testPlayer)
+		client.handler.OnPlayerJoined(testPlayer)
 
 		select {
 		case player := <-received:
@@ -371,7 +371,7 @@ func TestNotificationHandlerInvocation(t *testing.T) {
 			params json.RawMessage
 		}, 1)
 
-		client.OnNotification = func(method string, params json.RawMessage) {
+		client.handler.OnNotification = func(method string, params json.RawMessage) {
 			received <- struct {
 				method string
 				params json.RawMessage
@@ -380,7 +380,7 @@ func TestNotificationHandlerInvocation(t *testing.T) {
 
 		testMethod := protocol.NotificationServerStarted
 		testParams := json.RawMessage("{}")
-		client.OnNotification(testMethod, testParams)
+		client.handler.OnNotification(testMethod, testParams)
 
 		select {
 		case result := <-received:
@@ -395,8 +395,8 @@ func TestNotificationHandlerInvocation(t *testing.T) {
 	// World upgrade handlers
 	t.Run("WorldUpgradeStarted", func(t *testing.T) {
 		called := make(chan bool, 1)
-		client.OnWorldUpgradeStarted = func() { called <- true }
-		client.OnWorldUpgradeStarted()
+		client.handler.OnWorldUpgradeStarted = func() { called <- true }
+		client.handler.OnWorldUpgradeStarted()
 		select {
 		case <-called:
 		case <-time.After(time.Second):
@@ -406,8 +406,8 @@ func TestNotificationHandlerInvocation(t *testing.T) {
 
 	t.Run("WorldUpgradeProgress", func(t *testing.T) {
 		received := make(chan float64, 1)
-		client.OnWorldUpgradeProgress = func(p float64) { received <- p }
-		client.OnWorldUpgradeProgress(0.75)
+		client.handler.OnWorldUpgradeProgress = func(p float64) { received <- p }
+		client.handler.OnWorldUpgradeProgress(0.75)
 		select {
 		case p := <-received:
 			if p != 0.75 {
@@ -420,8 +420,8 @@ func TestNotificationHandlerInvocation(t *testing.T) {
 
 	t.Run("WorldUpgradeFinished", func(t *testing.T) {
 		called := make(chan bool, 1)
-		client.OnWorldUpgradeFinished = func() { called <- true }
-		client.OnWorldUpgradeFinished()
+		client.handler.OnWorldUpgradeFinished = func() { called <- true }
+		client.handler.OnWorldUpgradeFinished()
 		select {
 		case <-called:
 		case <-time.After(time.Second):
@@ -431,8 +431,8 @@ func TestNotificationHandlerInvocation(t *testing.T) {
 
 	t.Run("WorldUpgradeFailed", func(t *testing.T) {
 		received := make(chan string, 1)
-		client.OnWorldUpgradeFailed = func(r string) { received <- r }
-		client.OnWorldUpgradeFailed("disk full")
+		client.handler.OnWorldUpgradeFailed = func(r string) { received <- r }
+		client.handler.OnWorldUpgradeFailed("disk full")
 		select {
 		case r := <-received:
 			if r != "disk full" {

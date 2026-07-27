@@ -9,7 +9,7 @@ import (
 )
 
 func TestCallWithoutConnectionReportsNotConnected(t *testing.T) {
-	client := &MCRPCClient{}
+	client := &Client{}
 
 	err := client.call(context.Background(), "minecraft:players", nil, nil)
 	if err == nil {

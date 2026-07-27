@@ -8,14 +8,14 @@ import (
 )
 
 // GetBanlist retrieves the current list of banned players.
-func (c *MCRPCClient) GetBanlist(ctx context.Context) ([]UserBan, error) {
+func (c *Client) GetBanlist(ctx context.Context) ([]UserBan, error) {
 	var banlistPlayers []UserBan
 	err := c.call(ctx, protocol.MethodBansGet, nil, &banlistPlayers)
 	return banlistPlayers, err
 }
 
 // SetBanlist sets the ban list to the specified list of bans, replacing the existing list.
-func (c *MCRPCClient) SetBanlist(ctx context.Context, bans []UserBan) ([]UserBan, error) {
+func (c *Client) SetBanlist(ctx context.Context, bans []UserBan) ([]UserBan, error) {
 	var updatedBanlist []UserBan
 	params := protocol.SetBanlistParams{Banlist: bans}
 	err := c.call(ctx, protocol.MethodBansSet, params, &updatedBanlist)
@@ -23,7 +23,7 @@ func (c *MCRPCClient) SetBanlist(ctx context.Context, bans []UserBan) ([]UserBan
 }
 
 // AddBanlist adds the specified bans to the ban list.
-func (c *MCRPCClient) AddBanlist(ctx context.Context, add []UserBan) ([]UserBan, error) {
+func (c *Client) AddBanlist(ctx context.Context, add []UserBan) ([]UserBan, error) {
 	var updatedBanlist []UserBan
 	params := protocol.AddBanlistParams{BanAdd: add}
 	err := c.call(ctx, protocol.MethodBansAdd, params, &updatedBanlist)
@@ -31,7 +31,7 @@ func (c *MCRPCClient) AddBanlist(ctx context.Context, add []UserBan) ([]UserBan,
 }
 
 // RemoveBanlist removes the specified players from the ban list.
-func (c *MCRPCClient) RemoveBanlist(ctx context.Context, remove []Player) ([]UserBan, error) {
+func (c *Client) RemoveBanlist(ctx context.Context, remove []Player) ([]UserBan, error) {
 	var updatedBanlist []UserBan
 	params := protocol.RemoveBanlistParams{BanRemove: remove}
 	err := c.call(ctx, protocol.MethodBansRemove, params, &updatedBanlist)
@@ -39,21 +39,21 @@ func (c *MCRPCClient) RemoveBanlist(ctx context.Context, remove []Player) ([]Use
 }
 
 // ClearBanlist removes all bans from the ban list.
-func (c *MCRPCClient) ClearBanlist(ctx context.Context) ([]UserBan, error) {
+func (c *Client) ClearBanlist(ctx context.Context) ([]UserBan, error) {
 	var updatedBanlist []UserBan
 	err := c.call(ctx, protocol.MethodBansClear, nil, &updatedBanlist)
 	return updatedBanlist, err
 }
 
 // GetIPBanlist retrieves the current list of banned IP addresses.
-func (c *MCRPCClient) GetIPBanlist(ctx context.Context) ([]IPBan, error) {
+func (c *Client) GetIPBanlist(ctx context.Context) ([]IPBan, error) {
 	var ipBanlist []IPBan
 	err := c.call(ctx, protocol.MethodIPBansGet, nil, &ipBanlist)
 	return ipBanlist, err
 }
 
 // SetIPBanlist sets the IP ban list to the specified list, replacing the existing list.
-func (c *MCRPCClient) SetIPBanlist(ctx context.Context, banlist []IPBan) ([]IPBan, error) {
+func (c *Client) SetIPBanlist(ctx context.Context, banlist []IPBan) ([]IPBan, error) {
 	var updatedIPBanlist []IPBan
 	params := protocol.SetIPBanlistParams{IPBanlist: banlist}
 	err := c.call(ctx, protocol.MethodIPBansSet, params, &updatedIPBanlist)
@@ -61,7 +61,7 @@ func (c *MCRPCClient) SetIPBanlist(ctx context.Context, banlist []IPBan) ([]IPBa
 }
 
 // AddIPBanlist adds the specified IP bans to the ban list.
-func (c *MCRPCClient) AddIPBanlist(ctx context.Context, add []IncomingIPBan) ([]IPBan, error) {
+func (c *Client) AddIPBanlist(ctx context.Context, add []IncomingIPBan) ([]IPBan, error) {
 	var updatedIPBanlist []IPBan
 	params := protocol.AddIPBanlistParams{IPBanAdd: add}
 	err := c.call(ctx, protocol.MethodIPBansAdd, params, &updatedIPBanlist)
@@ -69,7 +69,7 @@ func (c *MCRPCClient) AddIPBanlist(ctx context.Context, add []IncomingIPBan) ([]
 }
 
 // RemoveIPBanlist removes the specified IP addresses from the ban list.
-func (c *MCRPCClient) RemoveIPBanlist(ctx context.Context, ip []string) ([]IPBan, error) {
+func (c *Client) RemoveIPBanlist(ctx context.Context, ip []string) ([]IPBan, error) {
 	var updatedIPBanlist []IPBan
 	params := protocol.RemoveIPBanlistParams{IPBanRemove: ip}
 	err := c.call(ctx, protocol.MethodIPBansRemove, params, &updatedIPBanlist)
@@ -77,7 +77,7 @@ func (c *MCRPCClient) RemoveIPBanlist(ctx context.Context, ip []string) ([]IPBan
 }
 
 // ClearIPBanlist removes all IP bans from the ban list.
-func (c *MCRPCClient) ClearIPBanlist(ctx context.Context) ([]IPBan, error) {
+func (c *Client) ClearIPBanlist(ctx context.Context) ([]IPBan, error) {
 	var updatedIPBanlist []IPBan
 	err := c.call(ctx, protocol.MethodIPBansClear, nil, &updatedIPBanlist)
 	return updatedIPBanlist, err
