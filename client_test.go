@@ -391,3 +391,68 @@ func TestStartReportsANonUpgradeResponse(t *testing.T) {
 		t.Error("a failed handshake must leave the client stopped")
 	}
 }
+
+func TestStopAndSaveServer(t *testing.T) {
+	// These two are impractical against a live server, for obvious reasons.
+	server := newFakeServer(t, func(string) (any, error) { return true, nil })
+	client := New(server.addr(), "secret")
+
+	if err := client.Start(context.Background()); err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+	t.Cleanup(func() { _ = client.Close() })
+
+	if stopping, err := client.StopServer(context.Background()); err != nil || !stopping {
+		t.Errorf("StopServer = (%v, %v)", stopping, err)
+	}
+	if saving, err := client.SaveServer(context.Background(), true); err != nil || !saving {
+		t.Errorf("SaveServer = (%v, %v)", saving, err)
+	}
+}
+
+func TestAPIVersionReportsCallFailure(t *testing.T) {
+	server := newFakeServer(t, func(string) (any, error) { return nil, errServerRejected })
+	client := New(server.addr(), "secret")
+
+	if err := client.Start(context.Background()); err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+	t.Cleanup(func() { _ = client.Close() })
+
+	version, err := client.APIVersion(context.Background())
+	if err == nil {
+		t.Fatal("expected APIVersion to fail")
+	}
+	if version != "" {
+		t.Errorf("version = %q, want empty on failure", version)
+	}
+}
+
+func TestNotificationWithNoParameters(t *testing.T) {
+	server := newFakeServer(t, okResponder)
+
+	failures := make(chan error, 1)
+	client := New(server.addr(), "secret", WithHandler(Handler{
+		OnPlayerJoined: func(Player) { t.Error("a payload-less notification should not reach the handler") },
+		OnError:        func(_ string, err error) { failures <- err },
+	}))
+
+	if err := client.Start(context.Background()); err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+	t.Cleanup(func() { _ = client.Close() })
+
+	conn := server.nextConn(t)
+	if err := conn.Notify(context.Background(), "minecraft:notification/players/joined", []any{}); err != nil {
+		t.Fatalf("server failed to notify: %v", err)
+	}
+
+	select {
+	case err := <-failures:
+		if !errors.Is(err, errNoParams) {
+			t.Errorf("got %v, want errNoParams", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("an empty argument list was not reported")
+	}
+}

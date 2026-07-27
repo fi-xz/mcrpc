@@ -179,3 +179,86 @@ func TestTraceOffByDefault(t *testing.T) {
 		t.Errorf("GetPlayers failed: %v", err)
 	}
 }
+
+func TestTraceMessageRendering(t *testing.T) {
+	tests := []struct {
+		name    string
+		message TraceMessage
+		want    string
+	}{
+		{
+			name:    "outgoing call",
+			message: TraceMessage{Direction: TraceSent, Method: "minecraft:players", ID: "1"},
+			want:    "-> minecraft:players #1",
+		},
+		{
+			name: "outgoing call with params",
+			message: TraceMessage{
+				Direction: TraceSent,
+				Method:    "minecraft:allowlist/add",
+				ID:        "2",
+				Params:    []byte(`{"add":[]}`),
+			},
+			want: `-> minecraft:allowlist/add #2 {"add":[]}`,
+		},
+		{
+			name: "incoming result",
+			message: TraceMessage{
+				Direction: TraceReceived,
+				Method:    "minecraft:players",
+				ID:        "1",
+				Result:    []byte(`[]`),
+			},
+			want: "<- minecraft:players #1 []",
+		},
+		{
+			name: "incoming notification",
+			message: TraceMessage{
+				Direction:    TraceReceived,
+				Method:       "minecraft:notification/server/started",
+				Notification: true,
+			},
+			want: "<- notify minecraft:notification/server/started",
+		},
+		{
+			name: "incoming error",
+			message: TraceMessage{
+				Direction:    TraceReceived,
+				Method:       "minecraft:players/kick",
+				ID:           "3",
+				ErrorCode:    -32602,
+				ErrorMessage: "Invalid params",
+			},
+			want: "<- minecraft:players/kick #3 error -32602 Invalid params",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.message.String(); got != test.want {
+				t.Errorf("String() = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestTraceDirectionString(t *testing.T) {
+	if got := TraceSent.String(); got != "->" {
+		t.Errorf("TraceSent = %q, want ->", got)
+	}
+	if got := TraceReceived.String(); got != "<-" {
+		t.Errorf("TraceReceived = %q, want <-", got)
+	}
+}
+
+func TestTraceMessageIsError(t *testing.T) {
+	if (TraceMessage{}).IsError() {
+		t.Error("a message with no error should not report one")
+	}
+	if !(TraceMessage{ErrorCode: -32601}).IsError() {
+		t.Error("a code alone should report an error")
+	}
+	if !(TraceMessage{ErrorMessage: "boom"}).IsError() {
+		t.Error("a message alone should report an error")
+	}
+}

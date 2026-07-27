@@ -50,3 +50,27 @@ func TestErrorExposesServerCode(t *testing.T) {
 		t.Errorf("Error() = %q, want %q", callErr.Error(), want)
 	}
 }
+
+func TestErrorWithoutAServerMessage(t *testing.T) {
+	// A transport failure produces no JSON-RPC message, so the wrapped cause is
+	// what the string has to carry.
+	err := &Error{Method: "minecraft:players", err: ErrNotConnected}
+
+	got := err.Error()
+	want := "mcrpc: minecraft:players failed: mcrpc: client is not connected"
+	if got != want {
+		t.Errorf("Error() = %q, want %q", got, want)
+	}
+	if err.Code != 0 {
+		t.Errorf("Code = %d, want 0 for a transport failure", err.Code)
+	}
+}
+
+func TestCallOnANilClient(t *testing.T) {
+	var client *Client
+
+	err := client.call(context.Background(), "minecraft:players", nil, nil)
+	if !errors.Is(err, ErrNotConnected) {
+		t.Errorf("got %v, want ErrNotConnected", err)
+	}
+}
