@@ -214,7 +214,7 @@ func TestHandlerRegisteredBeforeConnection(t *testing.T) {
 	t.Cleanup(func() { _ = client.Close() })
 
 	conn := server.nextConn(t)
-	if err := conn.Notify(context.Background(), "minecraft:notification/players/joined", PlayerByName("fi_xz")); err != nil {
+	if err := conn.Notify(context.Background(), "minecraft:notification/players/joined", []any{PlayerByName("fi_xz")}); err != nil {
 		t.Fatalf("server failed to notify: %v", err)
 	}
 
@@ -225,6 +225,57 @@ func TestHandlerRegisteredBeforeConnection(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("OnPlayerJoined was never called")
+	}
+}
+
+// TestNotificationPayloadIsPositional locks in the shape rpc.discover
+// advertises: every notification declares exactly one parameter, so its
+// payload is element 0 of the JSON-RPC positional argument list rather than the
+// bare object. Decoding the params directly left every payload-carrying handler
+// in this package silently dead.
+func TestNotificationPayloadIsPositional(t *testing.T) {
+	server := newFakeServer(t, okResponder)
+
+	added := make(chan Player, 1)
+	failures := make(chan error, 4)
+	client := New(server.addr(), "secret", WithHandler(Handler{
+		OnAllowlistAdded: func(player Player) { added <- player },
+		OnError:          func(_ string, err error) { failures <- err },
+	}))
+
+	if err := client.Start(context.Background()); err != nil {
+		t.Fatalf("Start failed: %v", err)
+	}
+	t.Cleanup(func() { _ = client.Close() })
+
+	conn := server.nextConn(t)
+	player := PlayerByName("fi_xz")
+
+	// The bare object is not the wire format and must be reported, not guessed at.
+	if err := conn.Notify(context.Background(), "minecraft:notification/allowlist/added", player); err != nil {
+		t.Fatalf("server failed to notify: %v", err)
+	}
+	select {
+	case <-failures:
+	case <-added:
+		t.Error("a bare object was accepted; the params are a positional list")
+	case <-time.After(2 * time.Second):
+		t.Error("a bare object was neither decoded nor reported through OnError")
+	}
+
+	// The real shape: one positional argument holding the player.
+	if err := conn.Notify(context.Background(), "minecraft:notification/allowlist/added", []any{player}); err != nil {
+		t.Fatalf("server failed to notify: %v", err)
+	}
+	select {
+	case got := <-added:
+		if got.Name != player.Name {
+			t.Errorf("got player %q, want %q", got.Name, player.Name)
+		}
+	case err := <-failures:
+		t.Errorf("the documented shape failed to decode: %v", err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("OnAllowlistAdded was never called")
 	}
 }
 
@@ -243,7 +294,7 @@ func TestOnErrorReportsUndecodableNotification(t *testing.T) {
 	t.Cleanup(func() { _ = client.Close() })
 
 	conn := server.nextConn(t)
-	if err := conn.Notify(context.Background(), "minecraft:notification/players/joined", "not-a-player"); err != nil {
+	if err := conn.Notify(context.Background(), "minecraft:notification/players/joined", []any{"not-a-player"}); err != nil {
 		t.Fatalf("server failed to notify: %v", err)
 	}
 
