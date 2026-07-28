@@ -33,7 +33,7 @@ func TestProbePlayerNotifications(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		if _, seen := rawParams[method]; !seen {
-			rawParams[method] = string(params)
+			rawParams[method] = describeParams(params)
 		}
 	}
 
