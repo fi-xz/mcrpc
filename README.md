@@ -10,7 +10,7 @@ A Go client library for the [Minecraft Server Management Protocol](https://minec
 >
 > Most of this project is handled by the AI.
 >
-> While I try my best not to review the full project structure, there may some errors occur.
+> While I try my best to review the full project structure, there may some errors occur.
 
 ## Features
 
