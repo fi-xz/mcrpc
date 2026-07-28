@@ -12,6 +12,20 @@ import (
 	"time"
 )
 
+// describeParams renders a notification payload for the transcript, keeping
+// "the field was absent" distinct from "the field was there and empty". A
+// notification that declares no parameters could legitimately arrive either
+// way, and a probe exists to find out which.
+func describeParams(params json.RawMessage) string {
+	if params == nil {
+		return "(absent)"
+	}
+	if len(params) == 0 {
+		return "(empty)"
+	}
+	return string(params)
+}
+
 // worldUpgradeLog records everything the server pushes during a boot, with the
 // time since the probe started, so the ordering and cadence can be read back.
 type worldUpgradeLog struct {
@@ -48,10 +62,11 @@ func (l *worldUpgradeLog) handler() Handler {
 	return Handler{
 		OnNotification: func(method string, params json.RawMessage) {
 			l.mu.Lock()
+			defer l.mu.Unlock()
+
 			if _, seen := l.raw[method]; !seen {
-				l.raw[method] = string(params)
+				l.raw[method] = describeParams(params)
 			}
-			l.mu.Unlock()
 		},
 		OnError: func(method string, err error) {
 			l.note("DECODE FAILURE  %s: %v", method, err)
