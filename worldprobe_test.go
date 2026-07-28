@@ -26,8 +26,8 @@ func describeParams(params json.RawMessage) string {
 	return string(params)
 }
 
-// worldUpgradeLog records everything the server pushes during a boot, with the
-// time since the probe started, so the ordering and cadence can be read back.
+// worldUpgradeLog records a timestamped transcript of selected notifications
+// during a boot, plus the first raw params observed for each method.
 type worldUpgradeLog struct {
 	mu        sync.Mutex
 	started   time.Time
