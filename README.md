@@ -8,11 +8,9 @@ A Go client library for the [Minecraft Server Management Protocol](https://minec
 
 > [!Warning]
 >
-> Part of this project is handled by the AI.
+> Most of this project is handled by the AI.
 >
-> Most code structure is mostly handled by myself. Only repetitive tasks, tests, and long length codes are written by the AI.
->
-> While I try my best not to make vibe-coded library, there may some errors occur.
+> While I try my best not to review the full project structure, there may some errors occur.
 
 ## Features
 
